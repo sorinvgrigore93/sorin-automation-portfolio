@@ -17,3 +17,6 @@ Automatización programada en n8n para leer datos operativos, calcular métricas
 
 ## Estado
 Proyecto de portfolio orientado a demostrar reporting automatizado y procesamiento periódico de datos.
+
+## Captura del workflow
+![Workflow](./workflow-screenshot.png)
