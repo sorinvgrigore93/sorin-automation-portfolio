@@ -20,3 +20,6 @@ Proyecto de portfolio orientado a demostrar reporting automatizado y procesamien
 
 ## Captura del workflow
 ![Workflow](./workflow-screenshot.png)
+
+## Archivo del workflow
+- [workflow-export.json](./workflow-export.json)
