@@ -17,3 +17,6 @@ Workflow en n8n Cloud para recibir leads mediante webhook, validar campos obliga
 
 ## Estado
 Proyecto de portfolio orientado a demostrar automatización de procesos e integración de datos.
+
+## Captura del workflow
+![Workflow](./workflow-screenshot.png)
