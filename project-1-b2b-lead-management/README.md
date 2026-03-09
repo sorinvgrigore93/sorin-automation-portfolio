@@ -20,3 +20,6 @@ Proyecto de portfolio orientado a demostrar automatización de procesos e integr
 
 ## Captura del workflow
 ![Workflow](./workflow-screenshot.png)
+
+## Archivo del workflow
+- [workflow-export.json](./workflow-export.json)
