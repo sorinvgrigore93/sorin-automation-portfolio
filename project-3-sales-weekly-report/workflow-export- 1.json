@@ -1,0 +1,272 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2709
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \{\
+  "name": "Weekly Sales Leads Report (Sheets \uc0\u8594  Email)",\
+  "nodes": [\
+    \{\
+      "parameters": \{\
+        "rule": \{\
+          "interval": [\
+            \{\
+              "field": "weeks",\
+              "triggerAtDay": [\
+                1\
+              ],\
+              "triggerAtHour": 9\
+            \}\
+          ]\
+        \}\
+      \},\
+      "type": "n8n-nodes-base.scheduleTrigger",\
+      "typeVersion": 1.3,\
+      "position": [\
+        0,\
+        0\
+      ],\
+      "name": "Schedule - Weekly (Mon 09:00)"\
+    \},\
+    \{\
+      "parameters": \{\
+        "documentId": \{\
+          "__rl": true,\
+          "value": "REDACTED_SHEET_ID",\
+          "mode": "list",\
+          "cachedResultName": "Sales_Leads_Data"\
+        \},\
+        "sheetName": \{\
+          "__rl": true,\
+          "value": "gid=0",\
+          "mode": "list",\
+          "cachedResultName": "Leads"\
+        \},\
+        "options": \{\}\
+      \},\
+      "type": "n8n-nodes-base.googleSheets",\
+      "typeVersion": 4.7,\
+      "position": [\
+        208,\
+        0\
+      ],\
+      "name": "Read Leads - Google Sheets"\
+    \},\
+    \{\
+      "parameters": \{\
+        "jsCode": "// Calculate Weekly Metrics (previous week: Mon-Sun)\\nconst TZ = 'Europe/Madrid'; // solo informativo aqu\'ed\\nconst VALID_STATUS = 'validated';\\n\\nfunction toISODate(d) \{\\n  const yyyy = d.getFullYear();\\n  const mm = String(d.getMonth() + 1).padStart(2, '0');\\n  const dd = String(d.getDate()).padStart(2, '0');\\n  return `$\{yyyy\}-$\{mm\}-$\{dd\}`;\\n\}\\n\\nfunction startOfWeekMonday(date) \{\\n  const d = new Date(date);\\n  d.setHours(0, 0, 0, 0);\\n  const day = d.getDay();\\n  const diff = (day === 0 ? -6 : 1) - day;\\n  d.setDate(d.getDate() + diff);\\n  return d;\\n\}\\n\\nconst now = new Date();\\nconst thisWeekStart = startOfWeekMonday(now);\\nconst prevWeekStart = new Date(thisWeekStart);\\nprevWeekStart.setDate(prevWeekStart.getDate() - 7);\\n\\nconst prevWeekEnd = new Date(thisWeekStart);\\nprevWeekEnd.setDate(prevWeekEnd.getDate() - 1);\\nprevWeekEnd.setHours(23, 59, 59, 999);\\n\\nconst weekStartISO = toISODate(prevWeekStart);\\nconst weekEndISO = toISODate(prevWeekEnd);\\n\\nconst rows = $input.all().map(i => i.json);\\n\\nconst rowsFiltered = rows.filter(r => \{\\n  const created = (r.created_at || '').toString().trim();\\n  return created >= weekStartISO && created <= weekEndISO;\\n\});\\n\\nlet total = rowsFiltered.length;\\nlet validated = 0;\\n\\nconst byCountry = \{\};\\nconst byProduct = \{\};\\n\\nfor (const r of rowsFiltered) \{\\n  const status = (r.status || '').toString().trim().toLowerCase();\\n  if (status === VALID_STATUS) validated++;\\n\\n  const country = (r.country || 'UNKNOWN').toString().trim().toUpperCase();\\n  const product = (r.product || 'UNKNOWN').toString().trim();\\n\\n  byCountry[country] = (byCountry[country] || 0) + 1;\\n  byProduct[product] = (byProduct[product] || 0) + 1;\\n\}\\n\\nfunction topEntries(obj, limit = 10) \{\\n  return Object.entries(obj)\\n    .sort((a, b) => b[1] - a[1])\\n    .slice(0, limit)\\n    .map(([key, count]) => (\{ key, count \}));\\n\}\\n\\nconst result = \{\\n  meta: \{\\n    reportName: 'Weekly Sales Leads Report',\\n    weekStart: weekStartISO,\\n    weekEnd: weekEndISO,\\n    runAt: now.toISOString(),\\n  \},\\n  metrics: \{\\n    total,\\n    validated,\\n    byCountry,\\n    byProduct,\\n    topCountries: topEntries(byCountry, 5),\\n    topProducts: topEntries(byProduct, 5),\\n  \},\\n  rowsFilteredCount: rowsFiltered.length,\\n\};\\n\\nreturn [\{ json: result \}];"\
+      \},\
+      "type": "n8n-nodes-base.code",\
+      "typeVersion": 2,\
+      "position": [\
+        416,\
+        0\
+      ],\
+      "name": "Calculate Weekly Metrics"\
+    \},\
+    \{\
+      "parameters": \{\
+        "jsCode": "const data = $input.first().json;\\n\\nconst \{ reportName, weekStart, weekEnd \} = data.meta;\\nconst \{ total, validated, topCountries, topProducts \} = data.metrics;\\n\\nfunction bulletList(items) \{\\n  if (!items?.length) return '- (sin datos)';\\n  return items.map(i => `- $\{i.key\}: $\{i.count\}`).join('\\\\n');\\n\}\\n\\nconst subject = `$\{reportName\} \'97 $\{weekStart\} to $\{weekEnd\}`;\\n\\nconst body =\\n`$\{reportName\}\\nWeek: $\{weekStart\} \uc0\u8594  $\{weekEnd\}\\n\\nSummary\\n- Total leads: $\{total\}\\n- Validated leads: $\{validated\}\\n\\nTop Countries\\n$\{bulletList(topCountries)\}\\n\\nTop Products\\n$\{bulletList(topProducts)\}\\n\\nGenerated automatically by n8n.\\n`;\\n\\nreturn [\{\\n  json: \{\\n    subject,\\n    body,\\n    meta: data.meta,\\n    metrics: data.metrics\\n  \}\\n\}];"\
+      \},\
+      "type": "n8n-nodes-base.code",\
+      "typeVersion": 2,\
+      "position": [\
+        624,\
+        0\
+      ],\
+      "name": "Build Email Report"\
+    \},\
+    \{\
+      "parameters": \{\
+        "sendTo": "REDACTED_EMAIL",\
+        "subject": "=\{\{$json.subject\}\}",\
+        "emailType": "text",\
+        "message": "=\{\{$json.body\}\}",\
+        "options": \{\}\
+      \},\
+      "type": "n8n-nodes-base.gmail",\
+      "typeVersion": 2.2,\
+      "position": [\
+        832,\
+        0\
+      ],\
+      "name": "Send a message"\
+    \},\
+    \{\
+      "parameters": \{\
+        "operation": "upsert",\
+        "dataTableId": \{\
+          "__rl": true,\
+          "value": "REDACTED_DATA_TABLE_ID",\
+          "mode": "list",\
+          "cachedResultName": "weekly_sales_reports"\
+        \},\
+        "matchType": "allConditions",\
+        "filters": \{\
+          "conditions": [\
+            \{\
+              "keyName": "weekStart",\
+              "keyValue": "=\{\{$json.meta.weekStart\}\}"\
+            \}\
+          ]\
+        \},\
+        "columns": \{\
+          "mappingMode": "defineBelow",\
+          "value": \{\
+            "weekStart": "=\{\{$json.meta.weekStart\}\}",\
+            "weekEnd": "=\{\{$json.meta.weekEnd\}\}",\
+            "total": "=\{\{$json.metrics.total\}\}",\
+            "validated": "=\{\{$json.metrics.validated\}\}",\
+            "byCountry": "=\{\{ JSON.stringify($json.metrics.byCountry) \}\}",\
+            "byProduct": "=\{\{ JSON.stringify($json.metrics.byProduct) \}\}",\
+            "runAt": "=\{\{$json.meta.runAt\}\}"\
+          \},\
+          "matchingColumns": [],\
+          "schema": [\
+            \{\
+              "id": "weekStart",\
+              "displayName": "weekStart",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "readOnly": false,\
+              "removed": false\
+            \},\
+            \{\
+              "id": "weekEnd",\
+              "displayName": "weekEnd",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "readOnly": false,\
+              "removed": false\
+            \},\
+            \{\
+              "id": "total",\
+              "displayName": "total",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "number",\
+              "readOnly": false,\
+              "removed": false\
+            \},\
+            \{\
+              "id": "validated",\
+              "displayName": "validated",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "number",\
+              "readOnly": false,\
+              "removed": false\
+            \},\
+            \{\
+              "id": "byCountry",\
+              "displayName": "byCountry",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "readOnly": false,\
+              "removed": false\
+            \},\
+            \{\
+              "id": "byProduct",\
+              "displayName": "byProduct",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "readOnly": false,\
+              "removed": false\
+            \},\
+            \{\
+              "id": "runAt",\
+              "displayName": "runAt",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "dateTime",\
+              "readOnly": false,\
+              "removed": false\
+            \}\
+          ],\
+          "attemptToConvertTypes": false,\
+          "convertFieldsToString": false\
+        \},\
+        "options": \{\}\
+      \},\
+      "type": "n8n-nodes-base.dataTable",\
+      "typeVersion": 1.1,\
+      "position": [\
+        832,\
+        208\
+      ],\
+      "name": "Save Metrics - Data Store"\
+    \}\
+  ],\
+  "pinData": \{\},\
+  "connections": \{\
+    "Schedule - Weekly (Mon 09:00)": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "Read Leads - Google Sheets",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \},\
+    "Read Leads - Google Sheets": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "Calculate Weekly Metrics",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \},\
+    "Calculate Weekly Metrics": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "Build Email Report",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \},\
+    "Build Email Report": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "Send a message",\
+            "type": "main",\
+            "index": 0\
+          \},\
+          \{\
+            "node": "Save Metrics - Data Store",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \}\
+  \},\
+  "active": false,\
+  "settings": \{\
+    "executionOrder": "v1",\
+    "binaryMode": "separate",\
+    "availableInMCP": false\
+  \},\
+  "tags": []\
+\}}
