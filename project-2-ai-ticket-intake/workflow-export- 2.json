@@ -1,0 +1,427 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2709
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \{\
+  "name": "Ticket Intake & Validation API",\
+  "nodes": [\
+    \{\
+      "parameters": \{\
+        "conditions": \{\
+          "options": \{\
+            "caseSensitive": true,\
+            "leftValue": "",\
+            "typeValidation": "strict",\
+            "version": 3\
+          \},\
+          "conditions": [\
+            \{\
+              "leftValue": "=\{\{$json.ticket.email\}\}",\
+              "rightValue": "",\
+              "operator": \{\
+                "type": "string",\
+                "operation": "notEmpty",\
+                "singleValue": true\
+              \}\
+            \},\
+            \{\
+              "leftValue": "=\{\{$json.ticket.subject\}\}",\
+              "rightValue": "",\
+              "operator": \{\
+                "type": "string",\
+                "operation": "notEmpty",\
+                "singleValue": true\
+              \}\
+            \},\
+            \{\
+              "leftValue": "=\{\{$json.ticket.message\}\}",\
+              "rightValue": "",\
+              "operator": \{\
+                "type": "string",\
+                "operation": "notEmpty",\
+                "singleValue": true\
+              \}\
+            \}\
+          ],\
+          "combinator": "and"\
+        \},\
+        "options": \{\}\
+      \},\
+      "type": "n8n-nodes-base.if",\
+      "typeVersion": 2.3,\
+      "position": [\
+        416,\
+        0\
+      ],\
+      "name": "validate_required_fields"\
+    \},\
+    \{\
+      "parameters": \{\
+        "httpMethod": "POST",\
+        "path": "b2b/support/ticket",\
+        "responseMode": "responseNode",\
+        "options": \{\}\
+      \},\
+      "type": "n8n-nodes-base.webhook",\
+      "typeVersion": 2.1,\
+      "position": [\
+        0,\
+        0\
+      ],\
+      "name": "webhook_intake"\
+    \},\
+    \{\
+      "parameters": \{\
+        "jsCode": "// normalize_fields (FIX)\\n// Objetivo:\\n// - Normalizar campos\\n// - Asegurar ticket_id SIEMPRE\\n// - Mantener compatibilidad: dejamos tambi\'e9n el objeto ticket.*\\n\\nconst t = $json.ticket ?? $json;\\n\\n// 1) ticketId: acepta varios nombres posibles por si cambiaste el payload\\nconst ticketId =\\n  t.ticketId ??\\n  t.ticket_id ??\\n  t.ticketID ??\\n  $json.ticketId ??\\n  $json.ticket_id ??\\n  `TCK-$\{Date.now()\}`; // fallback si no viene nada\\n\\nconst email = t.email ?? \\"\\";\\nconst subject = t.subject ?? \\"\\";\\nconst message = t.message ?? \\"\\";\\nconst createdAt = t.createdAt ?? new Date().toISOString();\\nconst updatedAt = t.updatedAt ?? createdAt;\\n\\nconst ticketKey =\\n  t.ticketKey ??\\n  t.ticket_key ??\\n  (email && subject ? `$\{email\}::$\{subject\}` : \\"\\");\\n\\nreturn [\{\\n  json: \{\\n    // \uc0\u9989  FLAT (para Google Sheets f\'e1cil)\\n    ticket_id: ticketId,\\n    ticket_key: ticketKey,\\n    created_at: createdAt,\\n    updated_at: updatedAt,\\n    email,\\n    subject,\\n    message,\\n    status: \\"new\\",\\n\\n    // \u9989  COMPATIBILIDAD: mantenemos tambi\'e9n el objeto ticket\\n    ticket: \{\\n      ticketId: ticketId,\\n      ticketKey: ticketKey,\\n      createdAt,\\n      updatedAt,\\n      email,\\n      subject,\\n      message,\\n    \}\\n  \}\\n\}];"\
+      \},\
+      "type": "n8n-nodes-base.code",\
+      "typeVersion": 2,\
+      "position": [\
+        208,\
+        0\
+      ],\
+      "name": "normalize_fields"\
+    \},\
+    \{\
+      "parameters": \{\
+        "operation": "append",\
+        "documentId": \{\
+          "__rl": true,\
+          "value": "REDACTED_SHEET_ID",\
+          "mode": "list",\
+          "cachedResultName": "REDACTED_GOOGLE_SHEET"\
+        \},\
+        "sheetName": \{\
+          "__rl": true,\
+          "value": "gid=0",\
+          "mode": "list",\
+          "cachedResultName": "Tickets"\
+        \},\
+        "columns": \{\
+          "mappingMode": "defineBelow",\
+          "value": \{\
+            "status": "=\{\{$json.ticket.status\}\}",\
+            "created_at": "=\{\{$json.ticket.createdAt\}\}",\
+            "updated_at": "=\{\{$json.ticket.updatedAt\}\}",\
+            "email": "=\{\{$json.ticket.email\}\}",\
+            "company": "=\{\{$json.ticket.company\}\}",\
+            "plan": "=\{\{$json.ticket.plan\}\}",\
+            "source": "=\{\{$json.ticket.source\}\}",\
+            "subject": "=\{\{$json.ticket.subject\}\}",\
+            "message": "=\{\{$json.ticket.message\}\}",\
+            "ticket_key": "=\{\{$json.ticket.ticketKey\}\}",\
+            "is_duplicate": "=\{\{false\}\}",\
+            "assigned_rule": "=\{\{\\"mvp_no_assignment_yet\\"\}\}"\
+          \},\
+          "matchingColumns": [],\
+          "schema": [\
+            \{\
+              "displayName": "ticket_id",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": false\
+            \},\
+            \{\
+              "displayName": "status",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "created_at",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "updated_at",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "email",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "company",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "plan",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "source",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "subject",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "message",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "ticket_key",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "dedupe_hash",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "is_duplicate",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "duplicate_of_ticket_id",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "category",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "priority",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "ai_summary",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "sla_target_at",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "assigned_to",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "assigned_rule",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "notes",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "assigned_to_name",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "assigned_at",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \}\
+          ],\
+          "attemptToConvertTypes": false,\
+          "convertFieldsToString": false\
+        \},\
+        "options": \{\}\
+      \},\
+      "type": "n8n-nodes-base.googleSheets",\
+      "typeVersion": 4.7,\
+      "position": [\
+        624,\
+        -96\
+      ],\
+      "name": "store_ticket",\
+      "credentials": \{\
+        "googleSheetsOAuth2Api": \{\
+          "name": "REDACTED_CREDENTIAL"\
+        \}\
+      \}\
+    \},\
+    \{\
+      "parameters": \{\
+        "respondWith": "json",\
+        "responseBody": "=\{\\n  \\"ok\\": true,\\n  \\"ticket_id\\": \\"=\{\{$json.ticket.ticketId\}\}\\",\\n  \\"email\\": \\"=\{\{$json.ticket.email\}\}\\",\\n  \\"status\\": \\"accepted\\"\\n\}",\
+        "options": \{\}\
+      \},\
+      "type": "n8n-nodes-base.respondToWebhook",\
+      "typeVersion": 1.5,\
+      "position": [\
+        832,\
+        -96\
+      ],\
+      "name": "respond_200"\
+    \},\
+    \{\
+      "parameters": \{\
+        "respondWith": "json",\
+        "responseBody": "=\{\\n  \\"ok\\": false,\\n  \\"error\\": \\"missing_required_fields\\",\\n  \\"ticket_id\\": \\"\{\{$json.ticket.ticketId\}\}\\"\\n\}",\
+        "options": \{\
+          "responseCode": 400\
+        \}\
+      \},\
+      "type": "n8n-nodes-base.respondToWebhook",\
+      "typeVersion": 1.5,\
+      "position": [\
+        624,\
+        96\
+      ],\
+      "name": "respond_400"\
+    \}\
+  ],\
+  "pinData": \{\},\
+  "connections": \{\
+    "validate_required_fields": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "store_ticket",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ],\
+        [\
+          \{\
+            "node": "respond_400",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \},\
+    "webhook_intake": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "normalize_fields",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \},\
+    "normalize_fields": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "validate_required_fields",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \},\
+    "store_ticket": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "respond_200",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \}\
+  \},\
+  "active": false,\
+  "settings": \{\
+    "executionOrder": "v1",\
+    "binaryMode": "separate",\
+    "availableInMCP": false\
+  \},\
+  "tags": []\
+\}}

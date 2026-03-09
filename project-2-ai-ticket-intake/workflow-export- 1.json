@@ -1,0 +1,1430 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2709
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \{\
+  "name": "AI Ticket Triage & Assignment System",\
+  "nodes": [\
+    \{\
+      "parameters": \{\
+        "pollTimes": \{\
+          "item": [\
+            \{\
+              "mode": "everyMinute"\
+            \}\
+          ]\
+        \},\
+        "documentId": \{\
+          "__rl": true,\
+          "value": "REDACTED_SHEET_ID",\
+          "mode": "list",\
+          "cachedResultName": "REDACTED_GOOGLE_SHEET"\
+        \},\
+        "sheetName": \{\
+          "__rl": true,\
+          "value": "gid=0",\
+          "mode": "list",\
+          "cachedResultName": "Tickets"\
+        \},\
+        "event": "rowAdded",\
+        "options": \{\}\
+      \},\
+      "type": "n8n-nodes-base.googleSheetsTrigger",\
+      "typeVersion": 1,\
+      "position": [\
+        -304,\
+        -784\
+      ],\
+      "name": "find_ticket_by_key",\
+      "executeOnce": true,\
+      "credentials": \{\
+        "googleSheetsTriggerOAuth2Api": \{\
+          "name": "REDACTED_CREDENTIAL"\
+        \}\
+      \}\
+    \},\
+    \{\
+      "parameters": \{\
+        "jsCode": "const items = $input.all();\\n\\nconst withRow = items\\n  .map(i => (\{ json: i.json, row: Number(i.json.row_number ?? 0) \}))\\n  .filter(i => i.row > 0);\\n\\nif (withRow.length === 0) return items.slice(-1);\\n\\nwithRow.sort((a, b) => b.row - a.row);\\nreturn [\{ json: withRow[0].json \}];"\
+      \},\
+      "type": "n8n-nodes-base.code",\
+      "typeVersion": 2,\
+      "position": [\
+        -128,\
+        -784\
+      ],\
+      "name": "select_latest_ticket"\
+    \},\
+    \{\
+      "parameters": \{\
+        "documentId": \{\
+          "__rl": true,\
+          "value": "REDACTED_SHEET_ID",\
+          "mode": "list",\
+          "cachedResultName": "REDACTED_GOOGLE_SHEET"\
+        \},\
+        "sheetName": \{\
+          "__rl": true,\
+          "value": "gid=0",\
+          "mode": "list",\
+          "cachedResultName": "Tickets"\
+        \},\
+        "filtersUI": \{\
+          "values": [\
+            \{\
+              "lookupColumn": "ticket_key",\
+              "lookupValue": "=\{\{$json.ticket_key\}\}"\
+            \}\
+          ]\
+        \},\
+        "options": \{\
+          "returnFirstMatch": false\
+        \}\
+      \},\
+      "type": "n8n-nodes-base.googleSheets",\
+      "typeVersion": 4.7,\
+      "position": [\
+        48,\
+        -784\
+      ],\
+      "name": "load_ticket_record",\
+      "executeOnce": false,\
+      "credentials": \{\
+        "googleSheetsOAuth2Api": \{\
+          "name": "REDACTED_CREDENTIAL"\
+        \}\
+      \}\
+    \},\
+    \{\
+      "parameters": \{\
+        "jsCode": "const rows = $input.all().map(i => i.json);\\n\\n// fila nueva (la que dispar\'f3 el trigger)\\nconst current = $node[\\"select_latest_ticket\\"].json;\\n\\n// helper: ticket_id a prueba de \\"ticket_id \\" (con espacio) o vac\'edo\\nconst getTicketId = (r) => String(r.ticket_id ?? r[\\"ticket_id \\"] ?? \\"\\").trim();\\nconst getRow = (r) => Number(r.row_number ?? 0);\\n\\nconst currentTicketId = getTicketId(current);\\nconst currentRow = getRow(current);\\n\\n// excluir la fila actual\\nconst others = rows.filter(r =>\\n  getTicketId(r) !== currentTicketId && getRow(r) !== currentRow\\n);\\n\\nif (others.length === 0) \{\\n  return [\{ json: \{ is_duplicate: false, duplicate_of_ticket_id: \\"\\" \} \}];\\n\}\\n\\n// \'93original\'94 = la m\'e1s antigua (row_number menor)\\nothers.sort((a,b) => getRow(a) - getRow(b));\\nconst original = others[0];\\n\\nreturn [\{\\n  json: \{\\n    is_duplicate: true,\\n    duplicate_of_ticket_id: getTicketId(original),\\n  \}\\n\}];"\
+      \},\
+      "type": "n8n-nodes-base.code",\
+      "typeVersion": 2,\
+      "position": [\
+        256,\
+        -784\
+      ],\
+      "name": "check_duplicate"\
+    \},\
+    \{\
+      "parameters": \{\
+        "conditions": \{\
+          "options": \{\
+            "caseSensitive": true,\
+            "leftValue": "",\
+            "typeValidation": "loose",\
+            "version": 3\
+          \},\
+          "conditions": [\
+            \{\
+              "leftValue": "=\{\{$json[\\"is_duplicate\\"]\}\}",\
+              "rightValue": "true",\
+              "operator": \{\
+                "type": "string",\
+                "operation": "equals",\
+                "name": "filter.operator.equals"\
+              \}\
+            \}\
+          ],\
+          "combinator": "and"\
+        \},\
+        "looseTypeValidation": true,\
+        "options": \{\}\
+      \},\
+      "type": "n8n-nodes-base.if",\
+      "typeVersion": 2.3,\
+      "position": [\
+        464,\
+        -784\
+      ],\
+      "name": "if_duplicate"\
+    \},\
+    \{\
+      "parameters": \{\
+        "operation": "update",\
+        "documentId": \{\
+          "__rl": true,\
+          "value": "REDACTED_SHEET_ID",\
+          "mode": "list",\
+          "cachedResultName": "REDACTED_GOOGLE_SHEET"\
+        \},\
+        "sheetName": \{\
+          "__rl": true,\
+          "value": "gid=0",\
+          "mode": "list",\
+          "cachedResultName": "Tickets"\
+        \},\
+        "columns": \{\
+          "mappingMode": "defineBelow",\
+          "value": \{\
+            "ticket_id": "=\{\{$node[\\"select_latest_ticket\\"].json[\\"ticket_id\\"]\}\}",\
+            "is_duplicate": "=\{\{$node[\\"check_duplicate\\"].json[\\"is_duplicate\\"]\}\}",\
+            "duplicate_of_ticket_id": "=\{\{$node[\\"check_duplicate\\"].json[\\"duplicate_of_ticket_id\\"]\}\}"\
+          \},\
+          "matchingColumns": [\
+            "ticket_id"\
+          ],\
+          "schema": [\
+            \{\
+              "displayName": "ticket_id",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": false\
+            \},\
+            \{\
+              "displayName": "status",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "created_at",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "updated_at",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "email",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "company",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "plan",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "source",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "subject",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "message",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "ticket_key",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "dedupe_hash",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "is_duplicate",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": false\
+            \},\
+            \{\
+              "displayName": "duplicate_of_ticket_id",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": false\
+            \},\
+            \{\
+              "displayName": "category",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "priority",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "ai_summary",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "sla_target_at",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "assigned_to",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "assigned_rule",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "notes",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "row_number",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "number",\
+              "canBeUsedToMatch": true,\
+              "readOnly": true,\
+              "removed": true\
+            \}\
+          ],\
+          "attemptToConvertTypes": false,\
+          "convertFieldsToString": false\
+        \},\
+        "options": \{\}\
+      \},\
+      "type": "n8n-nodes-base.googleSheets",\
+      "typeVersion": 4.7,\
+      "position": [\
+        704,\
+        -832\
+      ],\
+      "name": "mark_as_duplicate",\
+      "alwaysOutputData": true,\
+      "credentials": \{\
+        "googleSheetsOAuth2Api": \{\
+          "name": "REDACTED_CREDENTIAL"\
+        \}\
+      \}\
+    \},\
+    \{\
+      "parameters": \{\
+        "operation": "append",\
+        "documentId": \{\
+          "__rl": true,\
+          "value": "REDACTED_SHEET_ID",\
+          "mode": "list",\
+          "cachedResultName": "REDACTED_GOOGLE_SHEET"\
+        \},\
+        "sheetName": \{\
+          "__rl": true,\
+          "value": 1491282341,\
+          "mode": "list",\
+          "cachedResultName": "AuditLog"\
+        \},\
+        "columns": \{\
+          "mappingMode": "defineBelow",\
+          "value": \{\
+            "timestamp": "=\{\{$now.toISO()\}\}",\
+            "ticket_id": "=\{\{$node[\\"select_latest_ticket\\"].json[\\"ticket_id\\"]\}\}",\
+            "stage": "=\{\{\\"dedupe\\"\}\}",\
+            "level": "=\{\{$node[\\"check_duplicate\\"].json[\\"is_duplicate\\"] ? \\"warn\\" : \\"info\\"\}\}",\
+            "message": "=\{\{$node[\\"check_duplicate\\"].json[\\"is_duplicate\\"] ? \\"Duplicate detected\\" : \\"No duplicate\\"\}\}",\
+            "payload": "=\{\{JSON.stringify(\{ticket_key: $node[\\"select_latest_ticket\\"].json[\\"ticket_key\\"], is_duplicate: $node[\\"check_duplicate\\"].json[\\"is_duplicate\\"], duplicate_of_ticket_id: $node[\\"check_duplicate\\"].json[\\"duplicate_of_ticket_id\\"]\}).slice(0, 5000)\}\}"\
+          \},\
+          "matchingColumns": [],\
+          "schema": [\
+            \{\
+              "displayName": "timestamp",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "ticket_id",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "stage",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "level",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "message",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "payload",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \}\
+          ],\
+          "attemptToConvertTypes": false,\
+          "convertFieldsToString": false\
+        \},\
+        "options": \{\}\
+      \},\
+      "type": "n8n-nodes-base.googleSheets",\
+      "typeVersion": 4.7,\
+      "position": [\
+        912,\
+        -832\
+      ],\
+      "name": "log_duplicate",\
+      "credentials": \{\
+        "googleSheetsOAuth2Api": \{\
+          "name": "REDACTED_CREDENTIAL"\
+        \}\
+      \}\
+    \},\
+    \{\
+      "parameters": \{\
+        "modelId": \{\
+          "__rl": true,\
+          "value": "gpt-4o-mini",\
+          "mode": "list",\
+          "cachedResultName": "GPT-4O-MINI"\
+        \},\
+        "responses": \{\
+          "values": [\
+            \{\
+              "role": "system",\
+              "content": "Eres un asistente de triage de tickets B2B.\\nDevuelve SOLO JSON v\'e1lido, sin texto extra, sin markdown.\\n\\nFormato exacto:\\n\{\\n  \\"category\\": \\"billing|technical|account|other\\",\\n  \\"priority\\": \\"low|medium|high|urgent\\",\\n  \\"summary\\": \\"una frase corta\\""\
+            \},\
+            \{\
+              "content": "=Plan: \{\{$node[\\"select_latest_ticket\\"].json[\\"plan\\"]\}\}\\nSubject: \{\{$node[\\"select_latest_ticket\\"].json[\\"subject\\"]\}\}\\nMessage: \{\{$node[\\"select_latest_ticket\\"].json[\\"message\\"]\}\}"\
+            \}\
+          ]\
+        \},\
+        "builtInTools": \{\},\
+        "options": \{\}\
+      \},\
+      "type": "@n8n/n8n-nodes-langchain.openAi",\
+      "typeVersion": 2.1,\
+      "position": [\
+        64,\
+        -544\
+      ],\
+      "name": "ai_classify",\
+      "credentials": \{\
+        "openAiApi": \{\
+          "name": "REDACTED_CREDENTIAL"\
+        \}\
+      \}\
+    \},\
+    \{\
+      "parameters": \{\
+        "jsCode": "const t = $json.output?.[0]?.content?.[0]?.text ?? \\"\\";\\nconst cleaned = t.trim().replace(/^```json|```$/g, \\"\\").trim();\\nreturn [\{ json: JSON.parse(cleaned) \}];"\
+      \},\
+      "type": "n8n-nodes-base.code",\
+      "typeVersion": 2,\
+      "position": [\
+        464,\
+        -544\
+      ],\
+      "name": "parse_ai_output"\
+    \},\
+    \{\
+      "parameters": \{\
+        "operation": "update",\
+        "documentId": \{\
+          "__rl": true,\
+          "value": "REDACTED_SHEET_ID",\
+          "mode": "list",\
+          "cachedResultName": "REDACTED_GOOGLE_SHEET"\
+        \},\
+        "sheetName": \{\
+          "__rl": true,\
+          "value": "gid=0",\
+          "mode": "list",\
+          "cachedResultName": "Tickets"\
+        \},\
+        "columns": \{\
+          "mappingMode": "defineBelow",\
+          "value": \{\
+            "ticket_id": "=\{\{$node[\\"select_latest_ticket\\"].json[\\"ticket_id\\"]\}\}",\
+            "category": "=\{\{$json[\\"category\\"]\}\}",\
+            "priority": "=\{\{$json[\\"priority\\"]\}\}",\
+            "ai_summary": "=\{\{$json[\\"summary\\"]\}\}"\
+          \},\
+          "matchingColumns": [\
+            "ticket_id"\
+          ],\
+          "schema": [\
+            \{\
+              "displayName": "ticket_id",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": false\
+            \},\
+            \{\
+              "displayName": "status",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "created_at",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "updated_at",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "email",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "company",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "plan",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "source",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "subject",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "message",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "ticket_key",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "dedupe_hash",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "is_duplicate",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "duplicate_of_ticket_id",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "category",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "priority",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "ai_summary",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "sla_target_at",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "assigned_to",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "assigned_rule",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "notes",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "row_number",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "number",\
+              "canBeUsedToMatch": true,\
+              "readOnly": true,\
+              "removed": true\
+            \}\
+          ],\
+          "attemptToConvertTypes": false,\
+          "convertFieldsToString": false\
+        \},\
+        "options": \{\}\
+      \},\
+      "type": "n8n-nodes-base.googleSheets",\
+      "typeVersion": 4.7,\
+      "position": [\
+        688,\
+        -544\
+      ],\
+      "name": "update_ai_fields",\
+      "alwaysOutputData": true,\
+      "credentials": \{\
+        "googleSheetsOAuth2Api": \{\
+          "name": "REDACTED_CREDENTIAL"\
+        \}\
+      \}\
+    \},\
+    \{\
+      "parameters": \{\
+        "documentId": \{\
+          "__rl": true,\
+          "value": "REDACTED_SHEET_ID",\
+          "mode": "list",\
+          "cachedResultName": "REDACTED_GOOGLE_SHEET"\
+        \},\
+        "sheetName": \{\
+          "__rl": true,\
+          "value": 835361611,\
+          "mode": "list",\
+          "cachedResultName": "Owners"\
+        \},\
+        "options": \{\}\
+      \},\
+      "type": "n8n-nodes-base.googleSheets",\
+      "typeVersion": 4.7,\
+      "position": [\
+        896,\
+        -544\
+      ],\
+      "name": "get_owners",\
+      "alwaysOutputData": true,\
+      "credentials": \{\
+        "googleSheetsOAuth2Api": \{\
+          "name": "REDACTED_CREDENTIAL"\
+        \}\
+      \}\
+    \},\
+    \{\
+      "parameters": \{\
+        "jsCode": "const ownersRaw = $input.all().map(i => i.json);\\n\\n// Normaliza boolean \\"active\\" (porque Sheets a veces devuelve true/TRUE/\\"TRUE\\"/1)\\nconst isActive = (v) => \{\\n  if (v === true) return true;\\n  if (v === false) return false;\\n  const s = String(v ?? \\"\\").trim().toLowerCase();\\n  return [\\"true\\", \\"1\\", \\"yes\\", \\"y\\"].includes(s);\\n\};\\n\\n// Si last_assigned_at est\'e1 vac\'edo o inv\'e1lido \uc0\u8594  lo tratamos como el m\'e1s antiguo\\nconst toTime = (v) => \{\\n  if (!v) return 0;\\n  const t = Date.parse(v);\\n  return Number.isNaN(t) ? 0 : t;\\n\};\\n\\n// 1) Filtra activos\\nconst owners = ownersRaw.filter(o => isActive(o.active));\\n\\n// Guardrail: si no hay owners activos, devolvemos un error \'93controlado\'94\\nif (owners.length === 0) \{\\n  return [\{\\n    json: \{\\n      error: \\"NO_ACTIVE_OWNERS\\",\\n      now_iso: new Date().toISOString()\\n    \}\\n  \}];\\n\}\\n\\n// 2) Ordena por last_assigned_at ASC (el m\'e1s viejo primero)\\nowners.sort((a, b) => toTime(a.last_assigned_at) - toTime(b.last_assigned_at));\\n\\nconst chosen = owners[0];\\n\\nreturn [\{\\n  json: \{\\n    owner_id: chosen.owner_id,\\n    owner_name: chosen.name,\\n    owner_row_number: chosen.row_number,   // clave para actualizar Owners\\n    now_iso: new Date().toISOString()\\n  \}\\n\}];"\
+      \},\
+      "type": "n8n-nodes-base.code",\
+      "typeVersion": 2,\
+      "position": [\
+        1104,\
+        -544\
+      ],\
+      "name": "pick_owner"\
+    \},\
+    \{\
+      "parameters": \{\
+        "operation": "update",\
+        "documentId": \{\
+          "__rl": true,\
+          "value": "REDACTED_SHEET_ID",\
+          "mode": "list",\
+          "cachedResultName": "REDACTED_GOOGLE_SHEET"\
+        \},\
+        "sheetName": \{\
+          "__rl": true,\
+          "value": 835361611,\
+          "mode": "list",\
+          "cachedResultName": "Owners"\
+        \},\
+        "columns": \{\
+          "mappingMode": "defineBelow",\
+          "value": \{\
+            "owner_id": "=\{\{$json.owner_id\}\}",\
+            "last_assigned_at": "=\{\{$json.now_iso\}\}"\
+          \},\
+          "matchingColumns": [\
+            "owner_id"\
+          ],\
+          "schema": [\
+            \{\
+              "displayName": "owner_id",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": false\
+            \},\
+            \{\
+              "displayName": "name",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "active",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "weight",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "last_assigned_at",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "row_number",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "number",\
+              "canBeUsedToMatch": true,\
+              "readOnly": true,\
+              "removed": true\
+            \}\
+          ],\
+          "attemptToConvertTypes": false,\
+          "convertFieldsToString": false\
+        \},\
+        "options": \{\}\
+      \},\
+      "type": "n8n-nodes-base.googleSheets",\
+      "typeVersion": 4.7,\
+      "position": [\
+        1312,\
+        -544\
+      ],\
+      "name": "update_owner_timestamp",\
+      "credentials": \{\
+        "googleSheetsOAuth2Api": \{\
+          "name": "REDACTED_CREDENTIAL"\
+        \}\
+      \}\
+    \},\
+    \{\
+      "parameters": \{\
+        "operation": "update",\
+        "documentId": \{\
+          "__rl": true,\
+          "value": "REDACTED_SHEET_ID",\
+          "mode": "list",\
+          "cachedResultName": "REDACTED_GOOGLE_SHEET"\
+        \},\
+        "sheetName": \{\
+          "__rl": true,\
+          "value": "gid=0",\
+          "mode": "list",\
+          "cachedResultName": "Tickets"\
+        \},\
+        "columns": \{\
+          "mappingMode": "defineBelow",\
+          "value": \{\
+            "ticket_id": "=\{\{$node[\\"select_latest_ticket\\"].json[\\"ticket_id\\"]\}\}",\
+            "assigned_to": "=\{\{$node[\\"pick_owner\\"].json[\\"owner_id\\"]\}\}",\
+            "assigned_to_name": "=\{\{$node[\\"pick_owner\\"].json[\\"owner_name\\"]\}\}",\
+            "assigned_at": "=\{\{$node[\\"pick_owner\\"].json[\\"now_iso\\"]\}\}"\
+          \},\
+          "matchingColumns": [\
+            "ticket_id"\
+          ],\
+          "schema": [\
+            \{\
+              "displayName": "ticket_id",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": false\
+            \},\
+            \{\
+              "displayName": "status",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "created_at",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "updated_at",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "email",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "company",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "plan",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "source",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "subject",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "message",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "ticket_key",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "dedupe_hash",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "is_duplicate",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "duplicate_of_ticket_id",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "category",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "priority",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "ai_summary",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "sla_target_at",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "assigned_to",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "assigned_rule",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "notes",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true,\
+              "removed": true\
+            \},\
+            \{\
+              "displayName": "assigned_to_name",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "assigned_at",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "row_number",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "number",\
+              "canBeUsedToMatch": true,\
+              "readOnly": true,\
+              "removed": true\
+            \}\
+          ],\
+          "attemptToConvertTypes": false,\
+          "convertFieldsToString": false\
+        \},\
+        "options": \{\}\
+      \},\
+      "type": "n8n-nodes-base.googleSheets",\
+      "typeVersion": 4.7,\
+      "position": [\
+        1520,\
+        -544\
+      ],\
+      "name": "assign_ticket",\
+      "credentials": \{\
+        "googleSheetsOAuth2Api": \{\
+          "name": "REDACTED_CREDENTIAL"\
+        \}\
+      \}\
+    \},\
+    \{\
+      "parameters": \{\
+        "operation": "append",\
+        "documentId": \{\
+          "__rl": true,\
+          "value": "REDACTED_SHEET_ID",\
+          "mode": "list",\
+          "cachedResultName": "REDACTED_GOOGLE_SHEET"\
+        \},\
+        "sheetName": \{\
+          "__rl": true,\
+          "value": 1491282341,\
+          "mode": "list",\
+          "cachedResultName": "AuditLog"\
+        \},\
+        "columns": \{\
+          "mappingMode": "defineBelow",\
+          "value": \{\
+            "timestamp": "=\{\{ new Date().toISOString() \}\}",\
+            "ticket_id": "=\{\{ $node[\\"select_latest_ticket\\"].json[\\"ticket_id\\"] \}\}",\
+            "stage": "assigned",\
+            "level": "info",\
+            "message": "Assigned ticket to owner (round-robin)",\
+            "payload": "=\{\{ JSON.stringify(\{   assigned_to: $node[\\"assign_ticket\\"].json[\\"assigned_to\\"],   assigned_to_name: $node[\\"assign_ticket\\"].json[\\"assigned_to_name\\"],   assigned_at: $node[\\"assign_ticket\\"].json[\\"assigned_at\\"],   category: $node[\\"parse_ai_output\\"].json[\\"category\\"],   priority: $node[\\"parse_ai_output\\"].json[\\"priority\\"] \}) \}\}"\
+          \},\
+          "matchingColumns": [],\
+          "schema": [\
+            \{\
+              "displayName": "timestamp",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "ticket_id",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "stage",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "level",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "message",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \},\
+            \{\
+              "displayName": "payload",\
+              "required": false,\
+              "defaultMatch": false,\
+              "display": true,\
+              "type": "string",\
+              "canBeUsedToMatch": true\
+            \}\
+          ],\
+          "attemptToConvertTypes": false,\
+          "convertFieldsToString": false\
+        \},\
+        "options": \{\}\
+      \},\
+      "type": "n8n-nodes-base.googleSheets",\
+      "typeVersion": 4.7,\
+      "position": [\
+        1728,\
+        -544\
+      ],\
+      "name": "log_assignment",\
+      "credentials": \{\
+        "googleSheetsOAuth2Api": \{\
+          "name": "REDACTED_CREDENTIAL"\
+        \}\
+      \}\
+    \}\
+  ],\
+  "pinData": \{\},\
+  "connections": \{\
+    "find_ticket_by_key": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "select_latest_ticket",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \},\
+    "select_latest_ticket": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "load_ticket_record",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \},\
+    "load_ticket_record": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "check_duplicate",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \},\
+    "check_duplicate": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "if_duplicate",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \},\
+    "if_duplicate": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "mark_as_duplicate",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ],\
+        [\
+          \{\
+            "node": "ai_classify",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \},\
+    "mark_as_duplicate": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "log_duplicate",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \},\
+    "ai_classify": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "parse_ai_output",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \},\
+    "parse_ai_output": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "update_ai_fields",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \},\
+    "update_ai_fields": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "get_owners",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \},\
+    "get_owners": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "pick_owner",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \},\
+    "pick_owner": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "update_owner_timestamp",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \},\
+    "update_owner_timestamp": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "assign_ticket",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \},\
+    "assign_ticket": \{\
+      "main": [\
+        [\
+          \{\
+            "node": "log_assignment",\
+            "type": "main",\
+            "index": 0\
+          \}\
+        ]\
+      ]\
+    \}\
+  \},\
+  "active": false,\
+  "settings": \{\
+    "executionOrder": "v1",\
+    "binaryMode": "separate",\
+    "availableInMCP": false\
+  \},\
+  "tags": []\
+\}}
