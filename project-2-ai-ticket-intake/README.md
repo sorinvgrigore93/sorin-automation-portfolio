@@ -17,3 +17,7 @@ Workflow en n8n para recibir tickets de entrada, estandarizar datos, clasificar 
 
 ## Estado
 Proyecto de portfolio orientado a demostrar automatización de operaciones y gestión inicial de tickets.
+
+## Capturas del workflow
+![Workflow 1](./workflow-screenshot-1.png)
+![Workflow 2](./workflow-screenshot-2.png)
