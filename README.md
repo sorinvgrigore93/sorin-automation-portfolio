@@ -19,6 +19,9 @@ Sistema de automatización en n8n Cloud que implementa un patrón Webhook + cola
 ### 5. [AI Support Triage & Proposal Detection System](./project-5-ai-support-triage)
 Workflow de automatización en n8n Cloud para recibir tickets de soporte por Webhook, clasificarlos con IA, detectar si requieren propuesta comercial y activar respuestas automáticas y notificaciones internas.
 
+### 6. [AI RFP Qualification & Proposal Drafting System](./project-6-ai-rfp-qualification)
+Workflow de automatización en n8n Cloud para recibir oportunidades comerciales tipo RFP por Webhook, validarlas, analizarlas con IA y generar automáticamente un primer borrador de propuesta cuando la oportunidad califica.
+
 ## Herramientas y Tecnologías
 - n8n
 - Webhooks
