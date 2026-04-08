@@ -1,0 +1,726 @@
+{
+  "name": "AI RFP Qualification & Proposal Drafting System",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "rfp-qualification",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -112,
+        -32
+      ],
+      "id": "d3d700ca-e1df-44c4-9743-59230b3c724b",
+      "name": "Webhook - Receive RFP Request",
+      "webhookId": "REDACTED_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1101594e-6342-4365-93db-4600901115b1",
+              "name": "companyName",
+              "value": "={{ ($json.body.companyName || '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "bc1394b5-7402-41bd-abf9-518419fcea01",
+              "name": "industry",
+              "value": "={{ ($json.body.industry || '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "00df1eae-bbb3-49fd-a49c-7eabe50cec2d",
+              "name": "country",
+              "value": "={{ ($json.body.country || '').trim().toUpperCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "4a10a7c5-61dd-476f-a1bf-b6fd5d96d13f",
+              "name": "budget",
+              "value": "={{ Number($json.body.budget || 0) }}",
+              "type": "number"
+            },
+            {
+              "id": "e0f8dfa9-7f91-463b-9255-5a30f73d3bd6",
+              "name": "deadline",
+              "value": "={{ ($json.body.deadline || '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "609467bc-40ea-46cf-925d-1c84800b140b",
+              "name": "projectType",
+              "value": "={{ ($json.body.projectType || '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "3e7495ba-cece-4c67-900a-2c3295ae84c7",
+              "name": "rfpText",
+              "value": "={{ ($json.body.rfpText || '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "5b439316-7b4b-4e78-b5e9-07f96eef9ad4",
+              "name": "contactEmail",
+              "value": "={{ ($json.body.contactEmail || '').trim().toLowerCase() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        96,
+        -32
+      ],
+      "id": "45dda25f-2c2e-4a07-8950-d4e18149c278",
+      "name": "Edit Fields - Normalize Opportunity Data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f4eef3b5-39d4-4769-8c8b-aaffda452573",
+              "leftValue": "={{ $json.companyName }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "9327c273-bcb3-4f3e-b47a-a9df267b7f19",
+              "leftValue": "={{ $json.rfpText }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "5c7f17e0-4b3b-46fa-90db-bf4fef612167",
+              "leftValue": "={{ $json.contactEmail }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        304,
+        -32
+      ],
+      "id": "c90265cb-5c13-4877-a59a-375d87d3efc7",
+      "name": "IF - Validate Required Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e72d5b09-8756-415f-818b-e1ba50d30f60",
+              "name": "qualificationPrompt",
+              "value": "={{  `You are an AI sales qualification assistant for a B2B automation agency.  Your task is to analyze the following RFP opportunity and return a structured business qualification.  Evaluate the opportunity using these 3 statuses only: - GO - REVIEW - NO_GO  Decision guidance: - GO = strong fit, clear scope, acceptable business potential - REVIEW = partially clear, some uncertainty, needs human review - NO_GO = poor fit, insufficient information, unrealistic scope, or low relevance  Return your answer as valid JSON only with this structure: {   \"qualificationStatus\": \"GO \n REVIEW \n NO_GO\",   \"summary\": \"short business summary\",   \"fitScore\": 0,   \"keyRequirements\": [\"req1\", \"req2\"],   \"risks\": [\"risk1\", \"risk2\"],   \"recommendedNextStep\": \"short recommendation\" }  Opportunity data: Company Name: ${$json.companyName} Industry: ${$json.industry} Country: ${$json.country} Budget: ${$json.budget} Deadline: ${$json.deadline} Project Type: ${$json.projectType} Contact Email: ${$json.contactEmail}  RFP Text: ${$json.rfpText} ` }}",
+              "type": "string"
+            },
+            {
+              "id": "2655520a-db58-4f15-bc1d-edd9cfd0dfac",
+              "name": "opportunitySummary",
+              "value": "={{ $json.companyName + ' | ' + $json.projectType + ' | ' + $json.country }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        448,
+        -192
+      ],
+      "id": "f2909de9-79d5-49ac-a01b-b8a3d0f6f2ed",
+      "name": "Edit Fields - Build AI Qualification Input"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "={{ $json.qualificationPrompt }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        608,
+        -192
+      ],
+      "id": "624dee58-65de-4b57-beeb-d1be4bf67a26",
+      "name": "OpenAI Chat - Analyze RFP Opportunity",
+      "credentials": {
+        "openAiApi": {
+          "id": "REDACTED_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawOutput = $json.output?.[0]?.content?.[0]?.text || '';\n\nfunction extractJsonString(text) {\n  let cleaned = text.trim();\n\n  // Quitar bloque markdown ```json ... ```\n  cleaned = cleaned.replace(/^```json\\s*/i, '').replace(/^```\\s*/i, '');\n  cleaned = cleaned.replace(/\\s*```$/i, '');\n\n  // Si viene con comillas extra al principio y final\n  if (\n    (cleaned.startsWith('\"') && cleaned.endsWith('\"')) ||\n    (cleaned.startsWith(\"'\") && cleaned.endsWith(\"'\"))\n  ) {\n    cleaned = cleaned.slice(1, -1);\n  }\n\n  // Desescapar secuencias comunes\n  cleaned = cleaned\n    .replace(/\\\\\"/g, '\"')\n    .replace(/\\\\n/g, '\\n')\n    .replace(/\\\\t/g, '\\t')\n    .replace(/\\\\\\\\/g, '\\\\');\n\n  // Intentar extraer solo el bloque JSON\n  const firstBrace = cleaned.indexOf('{');\n  const lastBrace = cleaned.lastIndexOf('}');\n\n  if (firstBrace === -1 || lastBrace === -1) {\n    throw new Error('No JSON object found in AI response');\n  }\n\n  return cleaned.slice(firstBrace, lastBrace + 1);\n}\n\ntry {\n  const jsonString = extractJsonString(rawOutput);\n  const parsed = JSON.parse(jsonString);\n\n  return [\n    {\n      json: {\n        qualificationStatus: parsed.qualificationStatus || 'REVIEW',\n        summary: parsed.summary || '',\n        fitScore: parsed.fitScore ?? 0,\n        keyRequirements: Array.isArray(parsed.keyRequirements) ? parsed.keyRequirements : [],\n        risks: Array.isArray(parsed.risks) ? parsed.risks : [],\n        recommendedNextStep: parsed.recommendedNextStep || '',\n        aiRawResponse: rawOutput\n      }\n    }\n  ];\n} catch (error) {\n  return [\n    {\n      json: {\n        qualificationStatus: 'REVIEW',\n        summary: 'AI response could not be parsed cleanly.',\n        fitScore: 0,\n        keyRequirements: [],\n        risks: ['Failed to parse AI output'],\n        recommendedNextStep: 'Manual review required.',\n        aiRawResponse: rawOutput,\n        parsingError: error.message\n      }\n    }\n  ];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        -48
+      ],
+      "id": "3b9fe415-b3dc-498f-817b-b1ab685c4278",
+      "name": "Code - Parse AI Qualification Result"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5e7f40fa-e653-416e-881f-98096d36170e",
+              "leftValue": "={{ $json.qualificationStatus }}",
+              "rightValue": "GO",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "58320f3b-fbe1-4718-9a70-028de4ea8c7f",
+              "leftValue": "={{ $json.qualificationStatus }}",
+              "rightValue": "REVIEW",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1136,
+        -48
+      ],
+      "id": "ec8a096d-6607-4d54-9170-65fda0fac9ac",
+      "name": "IF - Opportunity Is Qualified"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d393e981-5f13-40de-941d-2f65864955cb",
+              "name": "proposalDraftPrompt",
+              "value": "={{ `You are an AI pre-sales assistant for a B2B automation agency.  Write a concise and professional first-draft proposal email for a qualified business opportunity.  Requirements: - Keep the tone professional, clear, and consultative - Write in English - Make it suitable for sending internally to a sales or pre-sales team as a draft foundation - Include a short acknowledgement of the client need - Mention the likely scope based on the opportunity - Mention key requirements - Mention relevant risks or assumptions if needed - End with a suggested next step - Do not invent technical details not present in the input  Use this qualification result:  Qualification Status: ${$json.qualificationStatus} Summary: ${$json.summary} Fit Score: ${$json.fitScore} Key Requirements: ${Array.isArray($json.keyRequirements) ? $json.keyRequirements.join(', ') : ''} Risks: ${Array.isArray($json.risks) ? $json.risks.join(', ') : ''} Recommended Next Step: ${$json.recommendedNextStep}  Return valid JSON only with this structure: {   \"proposalSubject\": \"short subject line\",   \"proposalDraft\": \"full proposal draft text\" }` }}",
+              "type": "string"
+            },
+            {
+              "id": "542de357-14fe-42d9-a90c-2d4392481cab",
+              "name": "proposalDraftContext",
+              "value": "={{ $json.qualificationStatus + ' | score: ' + $json.fitScore }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        976,
+        -240
+      ],
+      "id": "359c39e4-7039-4239-9814-b2654aa9970b",
+      "name": "Edit Fields - Build Proposal Draft Input"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "={{ $json.proposalDraftPrompt }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        1152,
+        -240
+      ],
+      "id": "a171047d-14b0-4c09-be9e-ebdbefb6f861",
+      "name": "OpenAI Chat - Generate Proposal Draft",
+      "credentials": {
+        "openAiApi": {
+          "id": "REDACTED_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawOutput = $json.output?.[0]?.content?.[0]?.text || '';\n\nfunction extractJsonString(text) {\n  let cleaned = text.trim();\n\n  // Remove markdown code fences\n  cleaned = cleaned.replace(/^```json\\s*/i, '').replace(/^```\\s*/i, '');\n  cleaned = cleaned.replace(/\\s*```$/i, '');\n\n  // Remove leading/trailing triple backticks if still present\n  cleaned = cleaned.replace(/^'''json\\s*/i, '').replace(/\\s*'''$/i, '');\n\n  // Trim wrapping quotes only if the whole payload is quoted\n  if (\n    (cleaned.startsWith('\"') && cleaned.endsWith('\"')) ||\n    (cleaned.startsWith(\"'\") && cleaned.endsWith(\"'\"))\n  ) {\n    cleaned = cleaned.slice(1, -1);\n  }\n\n  // Find JSON block\n  const firstBrace = cleaned.indexOf('{');\n  const lastBrace = cleaned.lastIndexOf('}');\n\n  if (firstBrace === -1 || lastBrace === -1) {\n    throw new Error('No JSON object found in proposal draft response');\n  }\n\n  cleaned = cleaned.slice(firstBrace, lastBrace + 1);\n\n  // Normalize escaped sequences carefully\n  cleaned = cleaned\n    .replace(/\\r/g, '')\n    .replace(/\\\\n/g, '\\\\n')\n    .replace(/\\\\t/g, '\\\\t')\n    .replace(/\\\\\"/g, '\"');\n\n  return cleaned;\n}\n\ntry {\n  const jsonString = extractJsonString(rawOutput);\n  const parsed = JSON.parse(jsonString);\n\n  return [\n    {\n      json: {\n        proposalSubject: parsed.proposalSubject || 'Draft proposal',\n        proposalDraft: parsed.proposalDraft || '',\n        proposalRawResponse: rawOutput\n      }\n    }\n  ];\n} catch (error) {\n  return [\n    {\n      json: {\n        proposalSubject: 'Draft proposal',\n        proposalDraft: 'Proposal draft could not be parsed cleanly. Manual review required.',\n        proposalRawResponse: rawOutput,\n        parsingError: error.message\n      }\n    }\n  ];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        -400
+      ],
+      "id": "65bb1a38-8a20-48ea-9567-1b479e043cc4",
+      "name": "Code - Parse Proposal Draft Result"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cd8fa888-518e-4a33-a5b9-b6fd850c7ae2",
+              "name": "status",
+              "value": "={{ 'success' }}",
+              "type": "string"
+            },
+            {
+              "id": "4bb41e03-3c3b-46c9-b5dd-092dee17b8f6",
+              "name": "qualificationStatus",
+              "value": "={{ $('Code - Parse AI Qualification Result').item.json.qualificationStatus }}",
+              "type": "string"
+            },
+            {
+              "id": "a03a8cdc-8562-48ff-b850-0da75862d041",
+              "name": "summary",
+              "value": "={{ $('Code - Parse AI Qualification Result').item.json.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "47e26ba0-d6ea-4cc7-a860-f429792b095d",
+              "name": "fitScore",
+              "value": "={{ $('Code - Parse AI Qualification Result').item.json.fitScore }}",
+              "type": "number"
+            },
+            {
+              "id": "1ff18d31-e2ca-4eba-a27a-11aaba73b421",
+              "name": "keyRequirements",
+              "value": "={{ $('Code - Parse AI Qualification Result').item.json.keyRequirements }}",
+              "type": "array"
+            },
+            {
+              "id": "d933e14d-b049-4bd7-b76f-302b1208a9b3",
+              "name": "risks",
+              "value": "={{ $('Code - Parse AI Qualification Result').item.json.risks }}",
+              "type": "array"
+            },
+            {
+              "id": "03c2db54-7ba8-4a13-9948-8345278c9032",
+              "name": "recommendedNextStep",
+              "value": "={{ $('Code - Parse AI Qualification Result').item.json.recommendedNextStep }}",
+              "type": "string"
+            },
+            {
+              "id": "bc76b586-4e9c-489b-aa7f-f0ce9ba66821",
+              "name": "proposalSubject",
+              "value": "={{ $json.proposalSubject }}",
+              "type": "string"
+            },
+            {
+              "id": "0400bd11-60d9-47ce-a756-da52a6caef42",
+              "name": "proposalDraft",
+              "value": "={{ $json.proposalDraft }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1440,
+        -400
+      ],
+      "id": "e78540b5-7edc-4dec-a41b-88c58113f5cf",
+      "name": "Edit Fields - Build Final Success Response"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a217bd60-7707-49ff-a000-8746552aca85",
+              "name": "status",
+              "value": "={{ 'rejected' }}",
+              "type": "string"
+            },
+            {
+              "id": "3c83e3ae-d9e6-4d7c-8511-56ab3513a130",
+              "name": "qualificationStatus",
+              "value": "={{ $('Code - Parse AI Qualification Result').item.json.qualificationStatus }}",
+              "type": "string"
+            },
+            {
+              "id": "2b4a306c-344e-43ba-882a-c85ecb2de6c2",
+              "name": "summary",
+              "value": "={{ $('Code - Parse AI Qualification Result').item.json.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "eee3ab78-088f-4750-8fdc-636be6c34583",
+              "name": "fitScore",
+              "value": "={{ $('Code - Parse AI Qualification Result').item.json.fitScore }}",
+              "type": "number"
+            },
+            {
+              "id": "be5faddc-ecdf-477c-8611-039c274ea82f",
+              "name": "keyRequirements",
+              "value": "={{ $('Code - Parse AI Qualification Result').item.json.keyRequirements }}",
+              "type": "array"
+            },
+            {
+              "id": "c27bbbe2-c2eb-412c-ae74-b35825201a00",
+              "name": "risks",
+              "value": "={{ $('Code - Parse AI Qualification Result').item.json.risks }}",
+              "type": "array"
+            },
+            {
+              "id": "bc85195b-eb69-46a8-997c-5dd081a678c5",
+              "name": "recommendedNextStep",
+              "value": "={{ $('Code - Parse AI Qualification Result').item.json.recommendedNextStep }}",
+              "type": "string"
+            },
+            {
+              "id": "3a8780e3-e0bd-47d3-9978-c2902734a27a",
+              "name": "message",
+              "value": "={{ 'Opportunity not qualified for proposal draft generation. Manual review or rejection recommended.' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1248,
+        208
+      ],
+      "id": "db962767-e1f8-47cc-a341-9600f89afefa",
+      "name": "Edit Fields - Build Final Rejection Response"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1680,
+        -112
+      ],
+      "id": "6b9561f3-85bd-47b4-8775-eda3457908ae",
+      "name": "Respond to Webhook - Return Qualification Result"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f14f0ee1-fa44-4a82-a8f9-d9d08c11c488",
+              "name": "status",
+              "value": "={{ 'rejected' }}",
+              "type": "string"
+            },
+            {
+              "id": "492bb146-5f54-42b1-9cf0-eb4860860744",
+              "name": "qualificationStatus",
+              "value": "={{ 'NO_GO' }}",
+              "type": "string"
+            },
+            {
+              "id": "3d42ee34-6198-4919-b7cd-8ee3fadbd134",
+              "name": "summary",
+              "value": "={{ 'Missing required fields in request payload.' }}",
+              "type": "string"
+            },
+            {
+              "id": "ac8d8ca5-9001-475e-a99d-7bd4e6a77c57",
+              "name": "message",
+              "value": "={{ 'companyName, rfpText and contactEmail are required.' }}",
+              "type": "string"
+            },
+            {
+              "id": "ae68b162-d479-4f6a-af09-8f33f55200f2",
+              "name": "fitScore",
+              "value": "={{ 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "e787adca-24f8-4d36-a8df-2294c6044f4d",
+              "name": "keyRequirements",
+              "value": "={{ [] }}",
+              "type": "array"
+            },
+            {
+              "id": "0ca7e730-ba1b-4173-ad1b-696680e4db80",
+              "name": "risks",
+              "value": "={{ ['Missing required request fields'] }}",
+              "type": "array"
+            },
+            {
+              "id": "00cbacc4-5ef5-418c-a4a6-5d663cd9bfa5",
+              "name": "recommendedNextStep",
+              "value": "={{ 'Send a complete payload and try again.' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        736,
+        272
+      ],
+      "id": "852b637a-026f-4853-8b82-4e5c8f767e0a",
+      "name": "Edit Fields - Build Missing Fields Response"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook - Receive RFP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields - Normalize Opportunity Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields - Normalize Opportunity Data": {
+      "main": [
+        [
+          {
+            "node": "IF - Validate Required Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Validate Required Fields": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields - Build AI Qualification Input",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields - Build Missing Fields Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields - Build AI Qualification Input": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Chat - Analyze RFP Opportunity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat - Analyze RFP Opportunity": {
+      "main": [
+        [
+          {
+            "node": "Code - Parse AI Qualification Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Parse AI Qualification Result": {
+      "main": [
+        [
+          {
+            "node": "IF - Opportunity Is Qualified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Opportunity Is Qualified": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields - Build Proposal Draft Input",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields - Build Final Rejection Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields - Build Proposal Draft Input": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Chat - Generate Proposal Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat - Generate Proposal Draft": {
+      "main": [
+        [
+          {
+            "node": "Code - Parse Proposal Draft Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Parse Proposal Draft Result": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields - Build Final Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields - Build Final Rejection Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - Return Qualification Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields - Build Final Success Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - Return Qualification Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields - Build Missing Fields Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - Return Qualification Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e143304b-de12-46e2-88f3-58f8d4a2d915",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "REDACTED_INSTANCE_ID"
+  },
+  "id": "4vw6VsoLMsdC9cSW",
+  "tags": []
+}
