@@ -16,6 +16,9 @@ Automatización programada en n8n para leer datos operativos, calcular métricas
 ### 4. [Webhook Queue Processor & Reliable Event Worker System](./project-4-webhook-queue-processor)
 Sistema de automatización en n8n Cloud que implementa un patrón Webhook + cola + worker para procesar eventos de forma fiable, con validación, idempotencia, locking, reintentos con backoff y alertas operativas.
 
+### 5. [AI Support Triage & Proposal Detection System](./project-5-ai-support-triage)
+Workflow de automatización en n8n Cloud para recibir tickets de soporte por Webhook, clasificarlos con IA, detectar si requieren propuesta comercial y activar respuestas automáticas y notificaciones internas.
+
 ## Herramientas y Tecnologías
 - n8n
 - Webhooks
