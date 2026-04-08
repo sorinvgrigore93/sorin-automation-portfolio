@@ -13,6 +13,9 @@ Workflow en n8n para recibir tickets, estandarizar datos, clasificar solicitudes
 ### 3. [Sistema de Reporte Semanal de Rendimiento Comercial](./project-3-sales-weekly-report)
 Automatización programada en n8n para leer datos operativos, calcular métricas semanales y generar resúmenes estructurados para reporting.
 
+### 4. [Webhook Queue Processor & Reliable Event Worker System](./project-4-webhook-queue-processor)
+Sistema de automatización en n8n Cloud que implementa un patrón Webhook + cola + worker para procesar eventos de forma fiable, con validación, idempotencia, locking, reintentos con backoff y alertas operativas.
+
 ## Herramientas y Tecnologías
 - n8n
 - Webhooks
