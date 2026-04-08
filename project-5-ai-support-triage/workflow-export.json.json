@@ -1,0 +1,906 @@
+{
+  "name": "P5_AI_Support_to_Proposal_Agent_v1",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "support/intake",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b42cd747-fdc3-4ce4-9292-c1381a91dc94",
+      "name": "TRG_Webhook_InboundRequest",
+      "webhookId": "REDACTED_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "414b48b6-6555-4f13-8654-bf1c17aca7de",
+              "name": "channel",
+              "value": "={{ $json.body.channel || 'email' }}",
+              "type": "string"
+            },
+            {
+              "id": "fd2b1652-0fd6-4393-9eda-47a9800e5000",
+              "name": "customer_name",
+              "value": "={{ $json.body.customer_name || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "78d4a0f8-4544-4230-8791-2e56f9a3077f",
+              "name": "customer_email",
+              "value": "={{ $json.body.customer_email || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "b8b1ffbd-3572-4cd6-960a-915666d56d5c",
+              "name": "company",
+              "value": "={{ $json.body.company || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "f34a707f-afca-4e0b-b1b8-9755ab3a057f",
+              "name": "message",
+              "value": "={{ $json.body.message || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "24135c47-26c2-4b7b-b879-aee8daebd77a",
+              "name": "lang_hint",
+              "value": "={{ $json.body.lang_hint || 'es' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "2c8e18fe-b0ee-4d02-9a0e-a4f5eac7800d",
+      "name": "SET_NormalizePayload"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2144,
+        80
+      ],
+      "id": "2ea1b17e-a636-4c47-ad0d-5099c20e5afc",
+      "name": "RSP_Webhook_Success"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b8fe59fa-2c5b-4601-9627-c4e9897cf83b",
+              "leftValue": "={{$json.customer_email}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "9b28d241-f6e9-43b6-83a4-57d4ba821bf4",
+              "leftValue": "={{$json.message}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "96061ea8-688c-4b7c-8f72-96edfb0dae69",
+      "name": "IF_ValidateRequiredFields"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        272
+      ],
+      "id": "265a1a6e-f156-49c5-be7a-b9fe1300d10c",
+      "name": "RSP_Webhook_Error_Validation"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "138cb776-d7f8-4f13-8154-3e7e7b1befc5",
+              "name": "run_id",
+              "value": "={{$execution.id}}",
+              "type": "string"
+            },
+            {
+              "id": "52041b78-3e82-4583-8c55-1e00352d9ec3",
+              "name": "ticket_id",
+              "value": "=TCK-{{$now.format('yyyy')}}-{{$execution.id.padStart(6,'0')}}",
+              "type": "string"
+            },
+            {
+              "id": "57185bbc-229b-4c55-90be-9d5e3bce95f4",
+              "name": "created_at",
+              "value": "={{$now.toISO()}}",
+              "type": "string"
+            },
+            {
+              "id": "f2e9a44d-c8a0-4602-9905-ed5bab0e752a",
+              "name": "updated_at",
+              "value": "={{$now.toISO()}}",
+              "type": "string"
+            },
+            {
+              "id": "0a808a6f-accf-4d4d-a73b-c8fcd42f40b5",
+              "name": "status",
+              "value": "NEW",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        624,
+        -16
+      ],
+      "id": "059b65f3-30ce-4abb-a713-d9325de38173",
+      "name": "SET_GenerateIds"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Eres un agente de soporte B2B. Devuelve SOLO JSON válido. No inventes datos.\nSi falta información crítica, añade preguntas en missing_info_questions."
+            },
+            {
+              "content": "=Input:\n{{JSON.stringify($json)}}\n\nDevuelve SOLO este JSON:\n{\n  \"language\": \"es|en\",\n  \"category\": \"support|billing|integration|feature_request|proposal_request\",\n  \"priority\": \"P1|P2|P3|P4\",\n  \"needs_human\": true|false,\n  \"proposal_needed\": true|false,\n  \"summary\": \"string\",\n  \"missing_info_questions\": [\"string\"]\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        816,
+        -16
+      ],
+      "id": "a0917cba-75cc-4b77-9d50-d0a85eb3ef78",
+      "name": "AI_TriageClassifier_OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "REDACTED_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.output?.[0]?.content?.[0]?.text || \"\";\n\nfunction clean(s) {\n  return String(s)\n    .replace(/```json/gi, \"\")\n    .replace(/```/g, \"\")\n    .trim();\n}\n\nlet triage = null;\nlet triage_parse_error = false;\n\ntry {\n  triage = JSON.parse(clean(raw));\n} catch (e1) {\n  try {\n    const cleaned = clean(raw);\n    const start = cleaned.indexOf(\"{\");\n    const end = cleaned.lastIndexOf(\"}\");\n    if (start !== -1 && end !== -1 && end > start) {\n      triage = JSON.parse(cleaned.slice(start, end + 1));\n    } else {\n      triage_parse_error = true;\n    }\n  } catch (e2) {\n    triage_parse_error = true;\n  }\n}\n\nreturn [{\n  json: {\n    ...$input.item.json,\n    triage,\n    triage_parse_error,\n    triage_raw: raw\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        -160
+      ],
+      "id": "988bc8a7-dc7b-4971-a402-5898ad75b483",
+      "name": "CODE_ParseTriageJson"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "99f5ad96-4064-4ae1-aaec-e6e04cd81162",
+              "name": "language",
+              "value": "={{$json.triage?.language || $json.lang_hint || 'es'}}",
+              "type": "string"
+            },
+            {
+              "id": "06b1f408-7abc-43ba-8527-c948034859fa",
+              "name": "category",
+              "value": "={{$json.triage?.category || 'support'}}",
+              "type": "string"
+            },
+            {
+              "id": "3260fc23-b5b9-4031-92d3-d2aac3e203b5",
+              "name": "priority",
+              "value": "={{$json.triage?.priority || 'P3'}}",
+              "type": "string"
+            },
+            {
+              "id": "b31f6946-dd93-47b5-80f2-dd83e738e8dc",
+              "name": "needs_human",
+              "value": "={{$json.triage?.needs_human ?? true}}",
+              "type": "boolean"
+            },
+            {
+              "id": "db6b0823-66ef-4291-8b44-8ac923f5f30c",
+              "name": "proposal_needed",
+              "value": "={{$json.triage?.proposal_needed ?? false}}",
+              "type": "boolean"
+            },
+            {
+              "id": "640a4f2f-3b41-4e0c-ab15-a5e6ec3998e6",
+              "name": "summary",
+              "value": "={{$json.triage?.summary || 'Triage fallback'}}",
+              "type": "string"
+            },
+            {
+              "id": "cb6cd36a-b7de-47a4-93cd-308459a1429b",
+              "name": "missing_info_questions_text",
+              "value": "={{($json.triage?.missing_info_questions || []).join('\\n- ')}}",
+              "type": "string"
+            },
+            {
+              "id": "4acc7b3b-88fe-45ac-b984-0990655c3cb3",
+              "name": "status",
+              "value": "={{($json.triage?.missing_info_questions || []).length > 0 ? 'NEEDS_INFO' : 'NEW'}}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1248,
+        -160
+      ],
+      "id": "417c819f-648c-4894-a9a4-8be58a5cc5be",
+      "name": "SET_FlattenTriage"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "REDACTED_SPREADSHEET_ID",
+          "mode": "list",
+          "cachedResultName": "P5 - AI Support Triage - Tickets",
+          "cachedResultUrl": "REDACTED_SPREADSHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "tickets",
+          "cachedResultUrl": "REDACTED_SHEET_URL"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ticket_id": "={{$json.ticket_id}}",
+            "created_at": "={{$json.created_at}}",
+            "updated_at": "={{$json.updated_at}}",
+            "status": "={{$json.status}}",
+            "channel": "={{$json.channel}}",
+            "customer_name": "={{$json.customer_name}}",
+            "customer_email": "={{$json.customer_email}}",
+            "company": "={{$json.company}}",
+            "language": "={{$json.language}}",
+            "category": "={{$json.category}}",
+            "priority": "={{$json.priority}}",
+            "summary": "={{$json.summary}}",
+            "original_message": "={{$json.message}}",
+            "needs_human": "={{$json.needs_human}}",
+            "proposal_needed": "={{$json.proposal_needed}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ticket_id",
+              "displayName": "ticket_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "channel",
+              "displayName": "channel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "company",
+              "displayName": "company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "language",
+              "displayName": "language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "original_message",
+              "displayName": "original_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "needs_human",
+              "displayName": "needs_human",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "proposal_needed",
+              "displayName": "proposal_needed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1344,
+        384
+      ],
+      "id": "7d60f92c-d2dd-4196-80ee-6ed6abdbd2a9",
+      "name": "GS_Tickets_Append",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REDACTED_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1088,
+        384
+      ],
+      "id": "0a3feefd-710d-421e-950c-83cd5b4625ad",
+      "name": "MRG_JoinBaseAndTriage"
+    },
+    {
+      "parameters": {
+        "sendTo": "redacted@example.com",
+        "subject": "={{ $json.status === 'NEEDS_INFO' ? `Necesitamos más información (${ $json.ticket_id })` : `Ticket recibido (${ $json.ticket_id })` }}",
+        "emailType": "text",
+        "message": "={{\n`Hola ${$json.customer_name || ''},\n\nHemos recibido tu solicitud (${ $json.ticket_id }).\n\nResumen:\n${ $json.summary }\n\n${\n  $json.status === 'NEEDS_INFO'\n    ? `Para continuar, responde a estas preguntas:\\n- ${($json.missing_info_questions_text || '').replace(/\\n/g, '\\n- ')}`\n    : 'Gracias. Te contactaremos en breve con los siguientes pasos.'\n}\n\n— Soporte`\n}}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "=Soporte - ACME",
+          "replyToSenderOnly": true
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1680,
+        80
+      ],
+      "id": "c5a8d86d-0edc-443e-a4f4-2ec3e611669e",
+      "name": "GMAIL_Send_Response",
+      "webhookId": "REDACTED_GMAIL_WEBHOOK_ID_1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REDACTED_GMAIL_CREDENTIAL_ID_1",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c733971d-dafc-4d72-9e38-25959357de37",
+              "leftValue": "={{ $item(0).$node[\"GS_Tickets_Append\"].json.proposal_needed === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1456,
+        32
+      ],
+      "id": "c87f4264-1deb-41b8-989f-7088ce7a2291",
+      "name": "IF_ProposalNeeded"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "248c228b-8021-4a44-9d8c-cca39d105b6b",
+              "name": "ok ",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "79c555f8-7cc6-4507-85a9-bdf721013931",
+              "name": "ticket_id",
+              "value": "={{$json.ticket_id ?? $node[\"GS_Tickets_Append\"].json.ticket_id}}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1920,
+        80
+      ],
+      "id": "8b966944-1a27-4949-b435-5001af81f375",
+      "name": "SET_ResponsePayload_False"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1584,
+        -1104
+      ],
+      "id": "3694e8f6-3f09-4274-8610-6fb6c73fa02d",
+      "name": "MRG_KeepContext_AfterGmail"
+    },
+    {
+      "parameters": {
+        "sendTo": "redacted@example.com",
+        "subject": "=Propuesta requerida - {{$json.ticket_id}}",
+        "emailType": "text",
+        "message": "=Ticket: {{$json.ticket_id}} Cliente: {{$json.customer_name}} ({{$json.customer_email}}) Empresa: {{$json.company}} Prioridad: {{$json.priority}} Resumen: {{$json.summary}}  Mensaje original: {{$json.original_message}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1680,
+        -256
+      ],
+      "id": "6cac5daf-ca79-443d-b184-6e70f5d2cb94",
+      "name": "GMAIL_Notify_Proposal_Internal",
+      "webhookId": "REDACTED_GMAIL_WEBHOOK_ID_2",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REDACTED_GMAIL_CREDENTIAL_ID_2",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5287feb0-c131-469e-bd64-e5c57b5ad376",
+              "name": "ok",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "6db0da86-551e-4a71-b944-5f9028f5abf7",
+              "name": "ticket_id",
+              "value": "={{$json.ticket_id ?? $node[\"GS_Tickets_Append\"].json.ticket_id}}",
+              "type": "string"
+            },
+            {
+              "id": "ed46e078-1205-43d4-856e-913ec66dd2bf",
+              "name": "=message",
+              "value": "Solicitud recibida. Te contactaremos con una propuesta.",
+              "type": "string"
+            },
+            {
+              "id": "e5ed0d74-973e-4769-afa6-2be8a6287eb6",
+              "name": "status",
+              "value": "PROPOSAL_REQUESTED",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1936,
+        -256
+      ],
+      "id": "c9d47959-4e90-4832-bced-76f6729747dc",
+      "name": "SET_ResponsePayload_True"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2160,
+        -256
+      ],
+      "id": "d7cf6878-556b-4f45-abee-96b2b8d95a1a",
+      "name": "RSP_Webhook_Success1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "TRG_Webhook_InboundRequest": {
+      "main": [
+        [
+          {
+            "node": "SET_NormalizePayload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SET_NormalizePayload": {
+      "main": [
+        [
+          {
+            "node": "IF_ValidateRequiredFields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF_ValidateRequiredFields": {
+      "main": [
+        [
+          {
+            "node": "SET_GenerateIds",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "RSP_Webhook_Error_Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SET_GenerateIds": {
+      "main": [
+        [
+          {
+            "node": "AI_TriageClassifier_OpenAI",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "MRG_JoinBaseAndTriage",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "AI_TriageClassifier_OpenAI": {
+      "main": [
+        [
+          {
+            "node": "CODE_ParseTriageJson",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CODE_ParseTriageJson": {
+      "main": [
+        [
+          {
+            "node": "SET_FlattenTriage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SET_FlattenTriage": {
+      "main": [
+        [
+          {
+            "node": "MRG_JoinBaseAndTriage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GS_Tickets_Append": {
+      "main": [
+        [
+          {
+            "node": "IF_ProposalNeeded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MRG_JoinBaseAndTriage": {
+      "main": [
+        [
+          {
+            "node": "GS_Tickets_Append",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GMAIL_Send_Response": {
+      "main": [
+        [
+          {
+            "node": "SET_ResponsePayload_False",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF_ProposalNeeded": {
+      "main": [
+        [
+          {
+            "node": "GMAIL_Notify_Proposal_Internal",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GMAIL_Send_Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MRG_KeepContext_AfterGmail": {
+      "main": [
+        []
+      ]
+    },
+    "SET_ResponsePayload_False": {
+      "main": [
+        [
+          {
+            "node": "RSP_Webhook_Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GMAIL_Notify_Proposal_Internal": {
+      "main": [
+        [
+          {
+            "node": "SET_ResponsePayload_True",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SET_ResponsePayload_True": {
+      "main": [
+        [
+          {
+            "node": "RSP_Webhook_Success1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b5d22c26-ad0c-4c98-9e3c-1fd185fede39",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "REDACTED_INSTANCE_ID"
+  },
+  "id": "QvDvAA3j72Hot1QU",
+  "tags": []
+}
