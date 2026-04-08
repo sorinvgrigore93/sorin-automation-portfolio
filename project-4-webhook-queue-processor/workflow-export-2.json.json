@@ -1,0 +1,848 @@
+{
+  "name": "Workflow 2: P04.2 - Worker (Queue → Google Sheets)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "417916a9-1fc1-4e78-8bba-0417af29bdec",
+      "name": "SCHED - Worker Tick (1m)"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "REDACTED_DATATABLE_ID",
+          "mode": "list",
+          "cachedResultName": "queue_events",
+          "cachedResultUrl": "REDACTED_DATATABLE_URL"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "keyValue": "=queued"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "671935b8-fe68-46c8-8291-c19152e77839",
+      "name": "DT - Fetch Pending Events (Queued)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date().toISOString();\n\nreturn [{\n  json: {\n    ...$json,\n    status: \"processing\",\n    locked_at: now,\n    locked_by: $execution.id,\n    updated_at: now,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "3cda0497-f6d8-4c08-b07a-21fcb313852a",
+      "name": "FN - Lock Row (Set Processing)"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "REDACTED_DATATABLE_ID",
+          "mode": "list",
+          "cachedResultName": "queue_events",
+          "cachedResultUrl": "REDACTED_DATATABLE_URL"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{$json.id}}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "processing",
+            "locked_at": "={{$json.locked_at}}",
+            "locked_by": "={{$json.locked_by}}",
+            "updated_at": "={{$json.updated_at}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attempts",
+              "displayName": "attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "max_attempts",
+              "displayName": "max_attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "next_retry_at",
+              "displayName": "next_retry_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "locked_at",
+              "displayName": "locked_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "locked_by",
+              "displayName": "locked_by",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payload",
+              "displayName": "payload",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "last_error",
+              "displayName": "last_error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "eda9e459-132a-4e91-8d93-d144ac6bf445",
+      "name": "DT - Update Row (Lock + Processing)"
+    },
+    {
+      "parameters": {
+        "jsCode": "let payloadObj = {};\ntry {\n  payloadObj = typeof $json.payload === 'string' ? JSON.parse($json.payload) : ($json.payload ?? {});\n} catch (e) {\n  payloadObj = {};\n}\n\nconst email = (payloadObj.email ?? \"\").toString().trim().toLowerCase();\nconst country = (payloadObj.country ?? \"\").toString().trim().toUpperCase();\nconst source = (payloadObj.source ?? \"\").toString().trim();\n\nreturn [{\n  json: {\n    ...$json,\n    lead: {\n      external_id: payloadObj.external_id ?? null,\n      email,\n      country,\n      source,\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        0
+      ],
+      "id": "afe64f2a-56f3-42be-9d5c-92f57bd71bd1",
+      "name": "FN - Parse Payload (JSON → Lead)"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "REDACTED_SPREADSHEET_ID",
+          "mode": "list",
+          "cachedResultName": "P04 - Queue Leads",
+          "cachedResultUrl": "REDACTED_SPREADSHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "LeadsXXX"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "35cd78ac-976b-4828-b573-c269890d4ee9",
+      "name": "GS - Append Row (Leads)",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REDACTED_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "REDACTED_DATATABLE_ID",
+          "mode": "list",
+          "cachedResultName": "queue_events",
+          "cachedResultUrl": "REDACTED_DATATABLE_URL"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{$json.queue_id}}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "done",
+            "locked_at": "={{ null }}",
+            "locked_by": "={{ null }}",
+            "updated_at": "={{ $now }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attempts",
+              "displayName": "attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "max_attempts",
+              "displayName": "max_attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "next_retry_at",
+              "displayName": "next_retry_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "locked_at",
+              "displayName": "locked_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "locked_by",
+              "displayName": "locked_by",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payload",
+              "displayName": "payload",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "last_error",
+              "displayName": "last_error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1472,
+        -192
+      ],
+      "id": "d41508a0-d221-4698-8033-edafe40306dd",
+      "name": "DT - Mark Done (Unlock)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "eba92072-88c1-40a0-aeeb-f777c0595cde",
+              "leftValue": "={{$json.error}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1248,
+        0
+      ],
+      "id": "16289fc4-6609-4b54-bb3c-ac87e9b8c8b4",
+      "name": "IF - Append Success?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = Date.now();\n\n// attempts/maxAttempts vienen del item de la cola (siempre existen ahí)\nconst attempts = Number($json.attempts ?? 0) + 1;\nconst maxAttempts = Number($json.max_attempts ?? 5);\n\n// backoff: 30s, 60s, 120s, 240s, 480s (máx 900s)\nconst delaySec = Math.min(900, Math.pow(2, attempts - 1) * 30);\nconst nextRetryAt = new Date(now + delaySec * 1000).toISOString();\n\n// Error del nodo de Google Sheets (en tu caso es string)\nconst gsError = $node[\"GS - Append Row (Leads)\"].json.error;\nconst errorMsg = (typeof gsError === \"string\" && gsError.length)\n  ? gsError\n  : JSON.stringify(gsError || {}) || \"Unknown error\";\n\n// ID real de la fila en la cola (NO depende del $json actual)\nconst queueId = $node[\"DT - Update Row (Lock + Processing)\"].json.id;\n\nconst shouldRetry = attempts < maxAttempts;\n\nreturn [{\n  json: {\n    ...$json,\n    queue_id: queueId,\n    attempts,\n    next_retry_at: nextRetryAt,\n    last_error: errorMsg,\n    next_status: shouldRetry ? \"queued\" : \"failed\",\n    shouldRetry,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1456,
+        96
+      ],
+      "id": "1f7346d8-612a-4389-96b1-ef34288eb801",
+      "name": "FN - Retry Decision (Backoff)"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "REDACTED_DATATABLE_ID",
+          "mode": "list",
+          "cachedResultName": "queue_events",
+          "cachedResultUrl": "REDACTED_DATATABLE_URL"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{$json.queue_id}}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "attempts": "={{$json.attempts}}",
+            "next_retry_at": "={{$json.next_retry_at}}",
+            "last_error": "={{$json.last_error}}",
+            "status": "={{$json.next_status}}",
+            "locked_at": "={{ null }}",
+            "locked_by": "={{ null }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attempts",
+              "displayName": "attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "max_attempts",
+              "displayName": "max_attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "next_retry_at",
+              "displayName": "next_retry_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "locked_at",
+              "displayName": "locked_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "locked_by",
+              "displayName": "locked_by",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payload",
+              "displayName": "payload",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "last_error",
+              "displayName": "last_error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1664,
+        96
+      ],
+      "id": "463e21f5-60c5-4b68-8d26-824a75551569",
+      "name": "DT - Update After Failure (Retry/Fail)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f8777d3f-c1c7-4355-b1be-c2fc0632f266",
+              "leftValue": "={{$json.next_status}}",
+              "rightValue": "failed",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1888,
+        96
+      ],
+      "id": "5b464adf-313e-4a8c-8d1e-ff101d1b67c0",
+      "name": "IF - Is Failed?"
+    },
+    {
+      "parameters": {
+        "sendTo": "redacted@example.com",
+        "subject": "={{$json.idempotency_key}}",
+        "message": "=<p><b>Webhook Queue Processor - FAILED</b></p> <ul>   <li><b>Queue ID:</b> {{$json.id}}</li>   <li><b>Idempotency:</b> {{$json.idempotency_key}}</li>   <li><b>Attempts:</b> {{$json.attempts}} / {{$json.max_attempts}}</li>   <li><b>Last error:</b> {{$json.last_error}}</li> </ul> <p><b>Payload:</b></p> <pre>{{$json.payload}}</pre>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2096,
+        -80
+      ],
+      "id": "518a80e4-07e6-4dfc-a708-ab7ab00eb969",
+      "name": "GMAIL - Alert Failed Event",
+      "webhookId": "REDACTED_GMAIL_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REDACTED_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "SCHED - Worker Tick (1m)": {
+      "main": [
+        [
+          {
+            "node": "DT - Fetch Pending Events (Queued)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DT - Fetch Pending Events (Queued)": {
+      "main": [
+        [
+          {
+            "node": "FN - Lock Row (Set Processing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FN - Lock Row (Set Processing)": {
+      "main": [
+        [
+          {
+            "node": "DT - Update Row (Lock + Processing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DT - Update Row (Lock + Processing)": {
+      "main": [
+        [
+          {
+            "node": "FN - Parse Payload (JSON → Lead)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FN - Parse Payload (JSON → Lead)": {
+      "main": [
+        [
+          {
+            "node": "GS - Append Row (Leads)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GS - Append Row (Leads)": {
+      "main": [
+        [
+          {
+            "node": "IF - Append Success?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Append Success?": {
+      "main": [
+        [
+          {
+            "node": "DT - Mark Done (Unlock)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "FN - Retry Decision (Backoff)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FN - Retry Decision (Backoff)": {
+      "main": [
+        [
+          {
+            "node": "DT - Update After Failure (Retry/Fail)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DT - Update After Failure (Retry/Fail)": {
+      "main": [
+        [
+          {
+            "node": "IF - Is Failed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Is Failed?": {
+      "main": [
+        [
+          {
+            "node": "GMAIL - Alert Failed Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "9606b052-fd0e-4ab3-b03a-9c8e8d4a1f7f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "REDACTED_INSTANCE_ID"
+  },
+  "id": "fWlsHOWFD6zXcdKK",
+  "tags": []
+}
