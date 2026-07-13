@@ -21,6 +21,9 @@ Workflow de automatización en n8n Cloud para recibir tickets de soporte por Web
 
 ### 6. [AI RFP Qualification & Proposal Drafting System](./project-6-ai-rfp-qualification)
 Workflow de automatización en n8n Cloud para recibir oportunidades comerciales tipo RFP por Webhook, validarlas, analizarlas con IA y generar automáticamente un primer borrador de propuesta cuando la oportunidad califica.
+### 7. [Ecommerce Operations Automation: Orders & Inventory](./project-7-ecommerce-operations-automation)
+
+Workflow de automatización en n8n para recibir pedidos por Webhook, validar datos, consultar stock en Google Sheets, actualizar inventario automáticamente y enviar alertas cuando no hay stock suficiente.
 
 ## Herramientas y Tecnologías
 - n8n
