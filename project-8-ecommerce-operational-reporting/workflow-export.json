@@ -1,0 +1,486 @@
+{
+  "name": "Sistema Automatizado de Reporting Operativo para E-commerce",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -112,
+        0
+      ],
+      "id": "004c26f9-8f01-4cf6-bd16-203178fbb96c",
+      "name": "Schedule Trigger | Ejecutar reporte diario"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "REDACTED_SPREADSHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Sistema Automatizado de Reporting Operativo para E-commerce",
+          "cachedResultUrl": "REDACTED_SPREADSHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Ventas",
+          "cachedResultUrl": "REDACTED_SHEET_URL"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        0
+      ],
+      "id": "0dee2ab5-1aff-4bd6-bd5c-78abb86ae0d5",
+      "name": "Google Sheets | Obtener ventas",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REDACTED_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "REDACTED_SPREADSHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Sistema Automatizado de Reporting Operativo para E-commerce",
+          "cachedResultUrl": "REDACTED_SPREADSHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1247621285,
+          "mode": "list",
+          "cachedResultName": "Pedidos",
+          "cachedResultUrl": "REDACTED_SHEET_URL"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        240
+      ],
+      "id": "edf9421e-f71b-4787-8cc6-8af1d32f137c",
+      "name": "Google Sheets | Obtener pedidos",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REDACTED_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "REDACTED_SPREADSHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Sistema Automatizado de Reporting Operativo para E-commerce",
+          "cachedResultUrl": "REDACTED_SPREADSHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 706563664,
+          "mode": "list",
+          "cachedResultName": "Incidencias",
+          "cachedResultUrl": "REDACTED_SHEET_URL"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        -208
+      ],
+      "id": "974fc351-7af7-420e-b914-fc45fa77bd22",
+      "name": "Google Sheets | Obtener incidencias",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REDACTED_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        480,
+        16
+      ],
+      "id": "0dcf604a-dbe9-47d9-acf0-b3c3e2977659",
+      "name": "Merge | Unir ventas y pedidos"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        848,
+        -96
+      ],
+      "id": "95e78f4b-c41d-4a20-b66d-85dc00d5be92",
+      "name": "Merge | Unir datos operativos"
+    },
+    {
+      "parameters": {
+        "content": "Sistema Automatizado de Reporting para E-commerce\nRecopila ventas, pedidos e incidencias desde Google Sheets y prepara un reporte operativo automático."
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        192,
+        -432
+      ],
+      "id": "9b1cd023-c73f-4117-b25d-ec5b8e689cd4",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Fuentes de datos\nLee información desde las pestañas:\nVentas, Pedidos e Incidencias.",
+        "height": 144,
+        "width": 224
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        -176
+      ],
+      "id": "ad7fa2df-eef8-44fc-bc60-f3e8386bb348",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Unificación de datos\nCombina ventas, pedidos e incidencias para calcular métricas del reporte.",
+        "height": 128,
+        "width": 224
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        640,
+        176
+      ],
+      "id": "d90705fc-220b-435c-8cdf-d1114bc1d7c8",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all().map(item => item.json);\n\nconst ventas = items.filter(item => item.producto && item.cantidad);\nconst pedidos = items.filter(item => item.estado_pedido);\nconst incidencias = items.filter(item => item.incidencia_id);\n\nconst ventasTotales = ventas.reduce((sum, venta) => {\n  return sum + Number(venta.total || 0);\n}, 0);\n\nconst cantidadVentas = ventas.length;\nconst cantidadPedidos = pedidos.length;\n\nconst pedidosEnviados = pedidos.filter(pedido => \n  pedido.estado_pedido === 'enviado'\n).length;\n\nconst incidenciasTotales = incidencias.length;\n\nconst incidenciasAbiertas = incidencias.filter(incidencia => \n  incidencia.estado === 'abierta'\n).length;\n\nlet estadoGeneral = 'Estable';\n\nif (incidenciasAbiertas > 0) {\n  estadoGeneral = 'Revisar incidencias abiertas';\n}\n\nreturn [\n  {\n    json: {\n      fecha_reporte: new Date().toISOString().split('T')[0],\n      ventas_totales: ventasTotales,\n      cantidad_ventas: cantidadVentas,\n      cantidad_pedidos: cantidadPedidos,\n      pedidos_enviados: pedidosEnviados,\n      incidencias_totales: incidenciasTotales,\n      incidencias_abiertas: incidenciasAbiertas,\n      estado_general: estadoGeneral\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        -96
+      ],
+      "id": "e48ac9c4-16d4-4000-b88f-f3f8fa2c9033",
+      "name": "Code | Calcular métricas del reporte"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nconst ventas = Number(data.ventas_totales || 0).toFixed(2);\n\nconst cuerpoHtml = `\n<div style=\"font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; color: #222;\">\n  <div style=\"background: #111827; color: white; padding: 20px; border-radius: 10px 10px 0 0;\">\n    <h2 style=\"margin: 0;\">📊 Reporte operativo diario</h2>\n    <p style=\"margin: 6px 0 0;\">E-commerce · ${data.fecha_reporte}</p>\n  </div>\n\n  <div style=\"border: 1px solid #e5e7eb; border-top: none; padding: 24px; border-radius: 0 0 10px 10px;\">\n    <h3 style=\"margin-top: 0;\">Resumen comercial</h3>\n\n    <table style=\"width: 100%; border-collapse: collapse; margin-bottom: 24px;\">\n      <tr>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb;\">Ventas totales</td>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;\"><strong>${ventas} €</strong></td>\n      </tr>\n      <tr>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb;\">Número de ventas</td>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;\"><strong>${data.cantidad_ventas}</strong></td>\n      </tr>\n      <tr>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb;\">Pedidos totales</td>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;\"><strong>${data.cantidad_pedidos}</strong></td>\n      </tr>\n      <tr>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb;\">Pedidos enviados</td>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;\"><strong>${data.pedidos_enviados}</strong></td>\n      </tr>\n    </table>\n\n    <h3>Incidencias</h3>\n\n    <table style=\"width: 100%; border-collapse: collapse; margin-bottom: 24px;\">\n      <tr>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb;\">Incidencias totales</td>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;\"><strong>${data.incidencias_totales}</strong></td>\n      </tr>\n      <tr>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb;\">Incidencias abiertas</td>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;\"><strong>${data.incidencias_abiertas}</strong></td>\n      </tr>\n    </table>\n\n    <div style=\"background: #fef3c7; border-left: 5px solid #f59e0b; padding: 14px; border-radius: 6px;\">\n      <strong>Estado general:</strong><br>\n      ${data.estado_general}\n    </div>\n\n    <p style=\"font-size: 12px; color: #6b7280; margin-top: 24px;\">\n      Reporte generado automáticamente con n8n.\n    </p>\n  </div>\n</div>\n`;\n\nreturn [\n  {\n    json: {\n      fecha_reporte: data.fecha_reporte,\n      asunto_email: `Reporte operativo diario e-commerce - ${data.fecha_reporte}`,\n      cuerpo_email: cuerpoHtml\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        -96
+      ],
+      "id": "c3d0b9ae-f372-43af-8719-56a7d92adae9",
+      "name": "Code | Crear reporte para email"
+    },
+    {
+      "parameters": {
+        "sendTo": "redacted@example.com",
+        "subject": "={{ $json.asunto_email }}",
+        "message": "={{ $json.cuerpo_email }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1472,
+        -96
+      ],
+      "id": "298e045c-e360-4777-9aca-86ae07742d90",
+      "name": "Gmail | Enviar reporte diario",
+      "webhookId": "REDACTED_GMAIL_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REDACTED_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "REDACTED_SPREADSHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Sistema Automatizado de Reporting Operativo para E-commerce",
+          "cachedResultUrl": "REDACTED_SPREADSHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1282992450,
+          "mode": "list",
+          "cachedResultName": "Historico_Reportes",
+          "cachedResultUrl": "REDACTED_SHEET_URL"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fecha_reporte": "={{ $json.fecha_reporte }}",
+            "ventas_totales": "={{ $json.ventas_totales }}",
+            "cantidad_ventas": "={{ $json.cantidad_ventas }}",
+            "cantidad_pedidos": "={{ $json.cantidad_pedidos }}",
+            "pedidos_enviados": "={{ $json.pedidos_enviados }}",
+            "incidencias_totales": "={{ $json.incidencias_totales }}",
+            "incidencias_abiertas": "={{ $json.incidencias_abiertas }}",
+            "estado_general": "={{ $json.estado_general }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "fecha_reporte",
+              "displayName": "fecha_reporte",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ventas_totales",
+              "displayName": "ventas_totales",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "cantidad_ventas",
+              "displayName": "cantidad_ventas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "cantidad_pedidos",
+              "displayName": "cantidad_pedidos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pedidos_enviados",
+              "displayName": "pedidos_enviados",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "incidencias_totales",
+              "displayName": "incidencias_totales",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "incidencias_abiertas",
+              "displayName": "incidencias_abiertas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estado_general",
+              "displayName": "estado_general",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1280,
+        -320
+      ],
+      "id": "0fadfda7-d51d-4bd9-997c-059a963b88fa",
+      "name": "Google Sheets | Guardar histórico del reporte",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REDACTED_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger | Ejecutar reporte diario": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets | Obtener ventas",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google Sheets | Obtener pedidos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google Sheets | Obtener incidencias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets | Obtener ventas": {
+      "main": [
+        [
+          {
+            "node": "Merge | Unir ventas y pedidos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets | Obtener pedidos": {
+      "main": [
+        [
+          {
+            "node": "Merge | Unir ventas y pedidos",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Google Sheets | Obtener incidencias": {
+      "main": [
+        [
+          {
+            "node": "Merge | Unir datos operativos",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge | Unir ventas y pedidos": {
+      "main": [
+        [
+          {
+            "node": "Merge | Unir datos operativos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge | Unir datos operativos": {
+      "main": [
+        [
+          {
+            "node": "Code | Calcular métricas del reporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code | Calcular métricas del reporte": {
+      "main": [
+        [
+          {
+            "node": "Code | Crear reporte para email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google Sheets | Guardar histórico del reporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code | Crear reporte para email": {
+      "main": [
+        [
+          {
+            "node": "Gmail | Enviar reporte diario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail | Enviar reporte diario": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "6ba95868-0d33-46ab-993c-4dab131e8281",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "REDACTED_INSTANCE_ID"
+  },
+  "nodeGroups": [],
+  "id": "AhkcID69inajBIcJ",
+  "tags": []
+}
