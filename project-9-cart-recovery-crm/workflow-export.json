@@ -1,0 +1,693 @@
+{
+  "name": "CRM de Postventa y Recuperación de Carritos Abandonados para E-commerce",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "crm/carrito-abandonado",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "d5d3da89-561c-4a59-b984-5669fbf9b517",
+      "name": "Webhook - Recepción de Carrito Abandonado",
+      "webhookId": "REDACTED_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "jsCode": "const carrito = $input.first().json.body;\n\nreturn [{\n  json: {\n    cliente: carrito.cliente || \"\",\n    email: (carrito.email || \"\").toLowerCase().trim(),\n    pedidoId: carrito.pedidoId || \"\",\n    productos: carrito.productos || [],\n    total: Number(carrito.total || 0),\n    moneda: carrito.moneda || \"EUR\",\n    fechaAbandono: new Date().toISOString(),\n    estado: \"Carrito abandonado\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "de55bd12-e0a4-44a7-a591-823e26bf0a9b",
+      "name": "Código - Validar y Normalizar Carrito"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "REDACTED_SPREADSHEET_ID",
+          "mode": "list",
+          "cachedResultName": "CRM de Postventa y Recuperación de Clientes para E-commerce",
+          "cachedResultUrl": "REDACTED_SPREADSHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "CRM - Clientes E-commerce",
+          "cachedResultUrl": "REDACTED_SHEET_URL"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idCliente": "={{'CLI-' + Date.now()}}",
+            "nombre": "={{$json.cliente}}",
+            "email": "={{$json.email}}",
+            "ultimoPedido": "={{$json.pedidoId}}",
+            "estadoCarrito": "={{$json.estado}}",
+            "totalCarrito": "={{$json.total}}",
+            "fechaAbandono": "={{$json.fechaAbandono}}",
+            "ultimoSeguimiento": "={{$json.fechaAbandono}}",
+            "estadoCliente": "Pendiente de recuperación"
+          },
+          "matchingColumns": [
+            "email"
+          ],
+          "schema": [
+            {
+              "id": "idCliente",
+              "displayName": "idCliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ultimoPedido",
+              "displayName": "ultimoPedido",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estadoCarrito",
+              "displayName": "estadoCarrito",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "totalCarrito",
+              "displayName": "totalCarrito",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fechaAbandono",
+              "displayName": "fechaAbandono",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ultimoSeguimiento",
+              "displayName": "ultimoSeguimiento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estadoCliente",
+              "displayName": "estadoCliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        416,
+        0
+      ],
+      "id": "07bf73af-393c-48ac-9488-ea983c8ff423",
+      "name": "Google Sheets - Crear o Actualizar Cliente CRM",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REDACTED_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "b15f77a8-7fc9-497b-8ef0-4b73959c136b",
+      "name": "Wait-Esperar - Primera Ventana de Recuperación",
+      "webhookId": "REDACTED_WAIT_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "REDACTED_SPREADSHEET_ID",
+          "mode": "list",
+          "cachedResultName": "CRM de Postventa y Recuperación de Clientes para E-commerce",
+          "cachedResultUrl": "REDACTED_SPREADSHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "CRM - Clientes E-commerce",
+          "cachedResultUrl": "REDACTED_SHEET_URL"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "email",
+              "lookupValue": "={{$json.email}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        832,
+        0
+      ],
+      "id": "17b1caf4-9e8d-44b1-a301-68323781c2c4",
+      "name": "Google Sheets - Verificar Estado del Carrito",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REDACTED_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fd2fff66-8d8d-489f-a366-aced0e51fb20",
+              "leftValue": "={{$json.estadoCarrito}}",
+              "rightValue": "Pedido completado",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "2f9c2ace-2314-4dbb-8b1a-cc081905ab67",
+      "name": "IF - Pedido Recuperado"
+    },
+    {
+      "parameters": {
+        "sendTo": "redacted@example.com",
+        "subject": "Tu carrito sigue guardado 🛒",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; color: #222; line-height: 1.6;\">\n\n  <div style=\"background-color: #2563eb; color: #ffffff; padding: 22px; border-radius: 12px 12px 0 0; text-align: center;\">\n    <h1 style=\"margin: 0; font-size: 24px;\">\n      Tu carrito sigue disponible\n    </h1>\n    <p style=\"margin: 8px 0 0; font-size: 15px;\">\n      Puedes finalizar tu compra cuando quieras\n    </p>\n  </div>\n\n  <div style=\"border: 1px solid #e5e7eb; border-top: none; padding: 28px; border-radius: 0 0 12px 12px;\">\n\n    <h2 style=\"margin-top: 0; color: #111;\">\n      Hola {{$json.nombre}},\n    </h2>\n\n    <p>\n      Hemos guardado tu carrito para que puedas continuar tu compra de forma rápida y sencilla.\n    </p>\n\n    <div style=\"background-color: #f6f6f6; border-left: 6px solid #2563eb; padding: 18px 20px; border-radius: 10px; margin: 22px 0;\">\n      <p style=\"margin: 0 0 8px;\">\n        <strong>Referencia del carrito:</strong> {{$json.ultimoPedido}}\n      </p>\n\n      <p style=\"margin: 0 0 8px;\">\n        <strong>Importe total:</strong> {{$json.totalCarrito}} {{$json.moneda || 'EUR'}}\n      </p>\n\n      <p style=\"margin: 0;\">\n        <strong>Estado:</strong> {{$json.estadoCarrito}}\n      </p>\n    </div>\n\n    <p>\n      Los productos que seleccionaste siguen disponibles, pero el stock puede cambiar.\n      Te recomendamos completar tu pedido para no perderlos.\n    </p>\n\n    <p style=\"text-align: center; margin: 30px 0;\">\n      <a href=\"https://example-store.com/cart\"\n         style=\"background-color: #2563eb; color: #ffffff; padding: 14px 26px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;\">\n        Recuperar mi carrito\n      </a>\n    </p>\n\n    <p>\n      Si tienes alguna duda, nuestro equipo de atención al cliente puede ayudarte.\n    </p>\n\n    <p style=\"margin-top: 30px;\">\n      Gracias,<br>\n      <strong>Equipo de Atención al Cliente</strong><br>\n      Demo Store\n    </p>\n\n    <hr style=\"border: none; border-top: 1px solid #e5e7eb; margin: 28px 0;\">\n\n    <p style=\"font-size: 12px; color: #777; text-align: center;\">\n      Este mensaje forma parte de un sistema automatizado de recuperación de carritos abandonados.\n    </p>\n\n  </div>\n</div>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1152,
+        192
+      ],
+      "id": "4ae40b4b-e50f-435e-b9e7-7218258c2664",
+      "name": "Gmail - Enviar Email de Recuperación",
+      "webhookId": "REDACTED_GMAIL_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REDACTED_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "REDACTED_SPREADSHEET_ID",
+          "mode": "list",
+          "cachedResultName": "CRM de Postventa y Recuperación de Clientes para E-commerce",
+          "cachedResultUrl": "REDACTED_SPREADSHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "CRM - Clientes E-commerce",
+          "cachedResultUrl": "REDACTED_SHEET_URL"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "email": "={{$node[\"IF - Pedido Recuperado\"].json.email}}",
+            "ultimoSeguimiento": "={{$now.toISO()}}",
+            "estadoCliente": "Primer email enviado",
+            "estadoCarrito": "Seguimiento enviado"
+          },
+          "matchingColumns": [
+            "email"
+          ],
+          "schema": [
+            {
+              "id": "idCliente",
+              "displayName": "idCliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ultimoPedido",
+              "displayName": "ultimoPedido",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "estadoCarrito",
+              "displayName": "estadoCarrito",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "totalCarrito",
+              "displayName": "totalCarrito",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "fechaAbandono",
+              "displayName": "fechaAbandono",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ultimoSeguimiento",
+              "displayName": "ultimoSeguimiento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estadoCliente",
+              "displayName": "estadoCliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1392,
+        192
+      ],
+      "id": "5cc1552d-c0c7-447f-8358-731885e4421c",
+      "name": "Google Sheets - Registrar Seguimiento Enviado",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REDACTED_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Actualiza el CRM después de enviar el email para registrar que el cliente ya recibió el primer seguimiento de recuperación.",
+        "width": 208
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        416
+      ],
+      "id": "d62039b0-ea5c-422c-a35a-043b7e8e8a4a",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "REDACTED_SPREADSHEET_ID",
+          "mode": "list",
+          "cachedResultName": "CRM de Postventa y Recuperación de Clientes para E-commerce",
+          "cachedResultUrl": "REDACTED_SPREADSHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "CRM - Clientes E-commerce",
+          "cachedResultUrl": "REDACTED_SHEET_URL"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "email": "={{$json.email}}",
+            "estadoCarrito": "Pedido completado",
+            "estadoCliente": "Pedido recuperado - sin email",
+            "ultimoSeguimiento": "={{$now.toISO()}}"
+          },
+          "matchingColumns": [
+            "email"
+          ],
+          "schema": [
+            {
+              "id": "idCliente",
+              "displayName": "idCliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ultimoPedido",
+              "displayName": "ultimoPedido",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "estadoCarrito",
+              "displayName": "estadoCarrito",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "totalCarrito",
+              "displayName": "totalCarrito",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "fechaAbandono",
+              "displayName": "fechaAbandono",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ultimoSeguimiento",
+              "displayName": "ultimoSeguimiento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estadoCliente",
+              "displayName": "estadoCliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1248,
+        -144
+      ],
+      "id": "c99cbfc2-2227-406c-9e9e-4e7c42c1c0b6",
+      "name": "Google Sheets - Registrar Pedido Recuperado",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REDACTED_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Actualiza el CRM cuando el cliente ya completó el pedido, evitando enviar un email de recuperación innecesario.",
+        "height": 128,
+        "width": 208
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        -288
+      ],
+      "id": "7ee6bde7-b965-4f12-828d-9f368d28be79",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook - Recepción de Carrito Abandonado": {
+      "main": [
+        [
+          {
+            "node": "Código - Validar y Normalizar Carrito",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Código - Validar y Normalizar Carrito": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Crear o Actualizar Cliente CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Crear o Actualizar Cliente CRM": {
+      "main": [
+        [
+          {
+            "node": "Wait-Esperar - Primera Ventana de Recuperación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait-Esperar - Primera Ventana de Recuperación": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Verificar Estado del Carrito",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Verificar Estado del Carrito": {
+      "main": [
+        [
+          {
+            "node": "IF - Pedido Recuperado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Pedido Recuperado": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Registrar Pedido Recuperado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail - Enviar Email de Recuperación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail - Enviar Email de Recuperación": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Registrar Seguimiento Enviado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Registrar Seguimiento Enviado": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "6c95c5cb-b8fe-42a0-8cbf-52471dbea62f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "REDACTED_INSTANCE_ID"
+  },
+  "nodeGroups": [],
+  "id": "6lhql0pXbJEtVWzS",
+  "tags": []
+}
