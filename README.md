@@ -25,6 +25,10 @@ Workflow de automatización en n8n Cloud para recibir oportunidades comerciales 
 
 Workflow de automatización en n8n para recibir pedidos por Webhook, validar datos, consultar stock en Google Sheets, actualizar inventario automáticamente y enviar alertas cuando no hay stock suficiente.
 
+### 8. [Sistema Automatizado de Reporting Operativo para E-commerce](./project-8-ecommerce-operational-reporting)
+
+Workflow automatizado en n8n para recopilar ventas, pedidos e incidencias desde Google Sheets, calcular métricas clave, generar un reporte HTML profesional y enviarlo automáticamente por Gmail, manteniendo además un histórico diario para trazabilidad operativa.
+
 ## Herramientas y Tecnologías
 - n8n
 - Webhooks
