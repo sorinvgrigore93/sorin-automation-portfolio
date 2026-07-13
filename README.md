@@ -1,6 +1,6 @@
-# Sorin Grigore – Portfolio de Automatización
+# Sorin Grigore – Portfolio de Ecommerce Operations & Automatización
 
-Especialista Junior en Automatización enfocado en workflows con n8n, integraciones con APIs, webhooks, Google Sheets y automatización con IA.
+Perfil junior enfocado en Ecommerce Operations, automatización con n8n, inventory workflows, reporting operativo, CRM y API integrations.
 
 ## Proyectos
 
