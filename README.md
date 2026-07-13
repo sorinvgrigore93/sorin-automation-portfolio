@@ -29,6 +29,10 @@ Workflow de automatización en n8n para recibir pedidos por Webhook, validar dat
 
 Workflow automatizado en n8n para recopilar ventas, pedidos e incidencias desde Google Sheets, calcular métricas clave, generar un reporte HTML profesional y enviarlo automáticamente por Gmail, manteniendo además un histórico diario para trazabilidad operativa.
 
+### 9. [CRM de Postventa y Recuperación de Carritos Abandonados para E-commerce](./project-9-cart-recovery-crm)
+
+Workflow de automatización en n8n para gestionar carritos abandonados en e-commerce, registrar y actualizar clientes en un CRM de Google Sheets, esperar una ventana de recuperación, verificar si el pedido ya se completó y decidir automáticamente si debe enviarse un email personalizado o evitar una comunicación innecesaria.
+
 ## Herramientas y Tecnologías
 - n8n
 - Webhooks
