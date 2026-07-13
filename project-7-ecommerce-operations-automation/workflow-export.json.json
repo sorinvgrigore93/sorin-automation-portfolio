@@ -1,0 +1,476 @@
+{
+  "name": "Order & Inventory Management Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-order",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -592,
+        -32
+      ],
+      "id": "57831407-5725-4aa8-9872-7fd3ca8085e5",
+      "name": "Webhook - Receive New Order",
+      "webhookId": "REDACTED_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "jsCode": "const order = $json.body;\n\nconst requiredFields = [\n  'order_id',\n  'customer_name',\n  'customer_email',\n  'product_sku',\n  'quantity'\n];\n\nconst missingFields = requiredFields.filter(field => {\n  return order[field] === undefined || order[field] === null || order[field] === '';\n});\n\nconst isQuantityValid = typeof order.quantity === 'number' && order.quantity > 0;\n\nreturn [\n  {\n    json: {\n      ...order,\n      is_valid_order: missingFields.length === 0 && isQuantityValid,\n      missing_fields: missingFields,\n      validation_error: missingFields.length > 0\n        ? `Missing required fields: ${missingFields.join(', ')}`\n        : !isQuantityValid\n          ? 'Quantity must be a number greater than 0'\n          : null\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -384,
+        -32
+      ],
+      "id": "bb0676be-e02f-4635-8ded-ff0768de4dfc",
+      "name": "Code - Validate Order Data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "bc980f8d-4344-4bf9-8e7f-144695286157",
+              "leftValue": "={{ $json.is_valid_order }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -208,
+        -32
+      ],
+      "id": "e49f2b97-1608-4032-8511-6fa202c8df86",
+      "name": "IF - Is Order Valid"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "REDACTED_SPREADSHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Order & Inventory Management Automation",
+          "cachedResultUrl": "REDACTED_SPREADSHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Inventory",
+          "cachedResultUrl": "REDACTED_SHEET_URL"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "sku",
+              "lookupValue": "={{ $json.product_sku }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        16,
+        -176
+      ],
+      "id": "14745dc2-a549-4bf3-a143-ef1ab9200228",
+      "name": "Google Sheets - Lookup Product Stock",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REDACTED_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const inventory = $json;\n\nconst order = $('Code - Validate Order Data').first().json;\n\nconst requestedQuantity = Number(order.quantity);\nconst currentStock = Number(inventory.stock_available);\nconst reorderLevel = Number(inventory.reorder_level);\n\nconst newStock = currentStock - requestedQuantity;\n\nconst hasEnoughStock = currentStock >= requestedQuantity;\nconst isLowStockAfterOrder = hasEnoughStock && newStock <= reorderLevel;\n\nreturn [\n  {\n    json: {\n      order_id: order.order_id,\n      customer_name: order.customer_name,\n      customer_email: order.customer_email,\n      product_sku: order.product_sku,\n      product_name: inventory.product_name,\n      requested_quantity: requestedQuantity,\n      current_stock: currentStock,\n      new_stock: hasEnoughStock ? newStock : currentStock,\n      reorder_level: reorderLevel,\n      supplier_email: inventory.supplier_email,\n      has_enough_stock: hasEnoughStock,\n      is_low_stock_after_order: isLowStockAfterOrder,\n      stock_status: hasEnoughStock ? 'AVAILABLE' : 'OUT_OF_STOCK',\n      message: hasEnoughStock\n        ? 'Stock available. Order can be processed.'\n        : 'Not enough stock. Supplier notification required.'\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        -176
+      ],
+      "id": "e39c2da0-e685-4cc6-815b-6a365cab10b5",
+      "name": "Code - Check Stock Availability"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c3333297-7d71-4b82-bed6-968f2fd7890c",
+              "leftValue": "={{ $json.has_enough_stock }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        400,
+        -176
+      ],
+      "id": "43c56fcc-10af-4062-aea8-4704b2984727",
+      "name": "IF - Has Enough Stock?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "REDACTED_SPREADSHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Order & Inventory Management Automation",
+          "cachedResultUrl": "REDACTED_SPREADSHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Inventory",
+          "cachedResultUrl": "REDACTED_SHEET_URL"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "sku": "={{ $json.product_sku }}",
+            "stock_available": "={{ $json.new_stock }}"
+          },
+          "matchingColumns": [
+            "sku"
+          ],
+          "schema": [
+            {
+              "id": "sku",
+              "displayName": "sku",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "product_name",
+              "displayName": "product_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "stock_available",
+              "displayName": "stock_available",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reorder_level",
+              "displayName": "reorder_level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "supplier_email",
+              "displayName": "supplier_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        624,
+        -320
+      ],
+      "id": "35c64d97-6aa0-4dd2-88fc-3592076fdbea",
+      "name": "Google Sheets - Update Inventory Stock",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REDACTED_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"status\": \"ORDER_PROCESSED\",\n  \"order_id\": \"{{ $('Code - Check Stock Availability').first().json.order_id }}\",\n  \"customer_email\": \"{{ $('Code - Check Stock Availability').first().json.customer_email }}\",\n  \"product_sku\": \"{{ $json.sku }}\",\n  \"message\": \"Order processed successfully and inventory updated.\",\n  \"updated_stock\": {{ $json.stock_available }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        880,
+        -320
+      ],
+      "id": "9b0a9515-c359-4258-b1a7-5d3b37b040e7",
+      "name": "Respond - Order Processed Successfully"
+    },
+    {
+      "parameters": {
+        "jsCode": "const stockCheck = $json;\n\nconst missingQuantity = stockCheck.requested_quantity - stockCheck.current_stock;\n\nreturn [\n  {\n    json: {\n      success: false,\n      status: \"OUT_OF_STOCK\",\n      order_id: stockCheck.order_id,\n      customer_email: stockCheck.customer_email,\n      product_sku: stockCheck.product_sku,\n      product_name: stockCheck.product_name,\n      requested_quantity: stockCheck.requested_quantity,\n      current_stock: stockCheck.current_stock,\n      missing_quantity: missingQuantity,\n      supplier_email: stockCheck.supplier_email,\n      message: \"Order cannot be processed because there is not enough stock.\",\n      internal_alert: `Stock shortage for ${stockCheck.product_sku}. Requested: ${stockCheck.requested_quantity}, available: ${stockCheck.current_stock}, missing: ${missingQuantity}.`\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        -80
+      ],
+      "id": "d99de895-3848-45cf-abcf-99dd9fc8ac48",
+      "name": "Code - Prepare Out of Stock Alert"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"status\": \"{{ $('Code - Prepare Out of Stock Alert').first().json.status }}\",\n  \"order_id\": \"{{ $('Code - Prepare Out of Stock Alert').first().json.order_id }}\",\n  \"customer_email\": \"{{ $('Code - Prepare Out of Stock Alert').first().json.customer_email }}\",\n  \"product_sku\": \"{{ $('Code - Prepare Out of Stock Alert').first().json.product_sku }}\",\n  \"product_name\": \"{{ $('Code - Prepare Out of Stock Alert').first().json.product_name }}\",\n  \"requested_quantity\": {{ $('Code - Prepare Out of Stock Alert').first().json.requested_quantity }},\n  \"current_stock\": {{ $('Code - Prepare Out of Stock Alert').first().json.current_stock }},\n  \"missing_quantity\": {{ $('Code - Prepare Out of Stock Alert').first().json.missing_quantity }},\n  \"message\": \"{{ $('Code - Prepare Out of Stock Alert').first().json.message }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1072,
+        -80
+      ],
+      "id": "051e1a1d-d0c5-4fa1-8b29-60bf543c5048",
+      "name": "Respond - Out of Stock"
+    },
+    {
+      "parameters": {
+        "sendTo": "redacted@example.com",
+        "subject": "=[High Priority] Stock shortage detected - {{ $json.product_sku }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; background-color: #ffffff;\">\n\n  <div style=\"background-color: #111827; color: #ffffff; padding: 20px;\">\n    <h2 style=\"margin: 0;\">Inventory Alert</h2>\n    <p style=\"margin: 6px 0 0 0; color: #d1d5db;\">\n      Stock shortage detected for a customer order\n    </p>\n  </div>\n\n  <div style=\"padding: 24px;\">\n\n    <div style=\"background-color: #fff7ed; border-left: 5px solid #f97316; padding: 14px 16px; margin-bottom: 22px;\">\n      <strong>Action required:</strong> This order cannot be processed because there is not enough stock available.\n    </div>\n\n    <h3 style=\"margin-top: 0; color: #111827;\">Order Details</h3>\n\n    <table style=\"width: 100%; border-collapse: collapse; margin-bottom: 24px;\">\n      <tr>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb; color: #6b7280;\">Order ID</td>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb;\"><strong>{{ $json.order_id }}</strong></td>\n      </tr>\n      <tr>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb; color: #6b7280;\">Product</td>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb;\">{{ $json.product_name }}</td>\n      </tr>\n      <tr>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb; color: #6b7280;\">SKU</td>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb;\"><strong>{{ $json.product_sku }}</strong></td>\n      </tr>\n      <tr>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb; color: #6b7280;\">Requested Quantity</td>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb;\">{{ $json.requested_quantity }}</td>\n      </tr>\n      <tr>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb; color: #6b7280;\">Current Stock</td>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb;\">{{ $json.current_stock }}</td>\n      </tr>\n      <tr>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb; color: #6b7280;\">Missing Quantity</td>\n        <td style=\"padding: 10px; border-bottom: 1px solid #e5e7eb; color: #dc2626;\"><strong>{{ $json.missing_quantity }}</strong></td>\n      </tr>\n    </table>\n\n    <div style=\"background-color: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 20px;\">\n      <strong>Recommended next step:</strong>\n      <p style=\"margin: 8px 0 0 0;\">\n        Review inventory levels and contact the supplier or purchasing team to restock this product.\n      </p>\n    </div>\n\n    <p style=\"color: #6b7280; font-size: 14px;\">\n      Internal note: {{ $json.internal_alert }}\n    </p>\n\n  </div>\n\n  <div style=\"background-color: #f3f4f6; padding: 14px 24px; color: #6b7280; font-size: 13px;\">\n    Automated notification generated by n8n — Order & Inventory Management Automation\n  </div>\n\n</div>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        816,
+        -80
+      ],
+      "id": "25b910d6-06ee-4777-be2a-0809d20b41f4",
+      "name": "Gmail - Send Stock Shortage Alert",
+      "webhookId": "REDACTED_GMAIL_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REDACTED_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"status\": \"INVALID_ORDER_DATA\",\n  \"order_id\": \"{{ $json.order_id || null }}\",\n  \"message\": \"Order cannot be processed because required data is missing or invalid.\",\n  \"missing_fields\": {{ JSON.stringify($json.missing_fields) }},\n  \"validation_error\": \"{{ $json.validation_error }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        64
+      ],
+      "id": "e3affdd4-e3d2-4791-8c6c-8323886189d3",
+      "name": "Respond - Invalid Order Data"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook - Receive New Order": {
+      "main": [
+        [
+          {
+            "node": "Code - Validate Order Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Validate Order Data": {
+      "main": [
+        [
+          {
+            "node": "IF - Is Order Valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Is Order Valid": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Lookup Product Stock",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond - Invalid Order Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Lookup Product Stock": {
+      "main": [
+        [
+          {
+            "node": "Code - Check Stock Availability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Check Stock Availability": {
+      "main": [
+        [
+          {
+            "node": "IF - Has Enough Stock?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Has Enough Stock?": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Update Inventory Stock",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Prepare Out of Stock Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Update Inventory Stock": {
+      "main": [
+        [
+          {
+            "node": "Respond - Order Processed Successfully",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Prepare Out of Stock Alert": {
+      "main": [
+        [
+          {
+            "node": "Gmail - Send Stock Shortage Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail - Send Stock Shortage Alert": {
+      "main": [
+        [
+          {
+            "node": "Respond - Out of Stock",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "bc4e1c9f-9326-4cb3-8f5e-c9a8cf4afd98",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "REDACTED_INSTANCE_ID"
+  },
+  "nodeGroups": [],
+  "id": "ZwlwtqrhQFlbmiNE",
+  "tags": []
+}
